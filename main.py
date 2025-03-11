@@ -70,7 +70,7 @@ load_dotenv()
 # 验证码请求URL
 RandCodeUrl = "http://zhjw.qfnu.edu.cn/verifycode.servlet"
 # 登录请求URL
-loginUrl = "http://zhjw.qfnu.edu.cn/Logon.do?method=logonLdap"
+loginUrl = "http://zhjw.qfnu.edu.cn/jsxsd/xk/LoginToXkLdap"
 # 初始数据请求URL
 dataStrUrl = "http://zhjw.qfnu.edu.cn/Logon.do?method=logon&flag=sess"
 
@@ -123,7 +123,7 @@ def generate_encoded_string(user_account, user_password):
 
     # 拼接编码后的字符串
     encoded = f"{account_b64}%%%{password_b64}"
-
+    logger.info(f"encoded: {encoded}")
     return encoded
 
 
@@ -138,13 +138,13 @@ def login(user_account, user_password, random_code, encoded):
         "Content-Type": "application/x-www-form-urlencoded",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36",
         "Origin": "http://zhjw.qfnu.edu.cn",
-        "Referer": "http://zhjw.qfnu.edu.cn/",
+        "Referer": "http://zhjw.qfnu.edu.cn/jsxsd/",
         "Upgrade-Insecure-Requests": "1",
     }
 
     data = {
-        "userAccount": user_account,
-        "userPassword": user_password,
+        "userAccount": "",
+        "userPassword": "",
         "RANDOMCODE": random_code,
         "encoded": encoded,
     }
@@ -202,12 +202,13 @@ def simulate_login(user_account, user_password):
         response = login(user_account, user_password, random_code, encoded)
 
         if response.status_code == 200:
-            if "验证码错误!!" in response.text:
+            if "验证码无效,请重新登录" or "验证码错误" in response.text:
                 logger.warning(f"验证码识别错误，重试第 {attempt + 1} 次")
                 continue
             if "密码错误" in response.text:
                 raise Exception("用户名或密码错误")
-            logger.info("登录成功")
+
+            logger.info(response.text)
             return True
         else:
             raise Exception("登录失败")
