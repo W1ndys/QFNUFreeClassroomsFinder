@@ -1,5 +1,5 @@
-pytz
+requests
 Pillow
-ddddocr
 python-dotenv
 colorlog
+ddddocr
