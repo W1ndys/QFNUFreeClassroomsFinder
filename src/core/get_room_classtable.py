@@ -1,0 +1,254 @@
+import requests
+from bs4 import BeautifulSoup
+from src.utils.session_manager import get_session
+import logging
+
+
+def get_room_classtable(xnxqh, room_name, week, day=None):
+    """
+    获取指定教室的课表信息
+
+    参数:
+        xnxqh (str): 学年学期，格式如 "2024-2025-2"
+        room_name (str): 教室名称，如 "格物楼A104"
+        week (int): 周次，如 3
+        day (int, optional): 星期几，1-7，如果不指定则返回整周课表
+
+    返回:
+        dict: 课表信息
+    """
+    try:
+        session = get_session()
+
+        # 先访问全校性教室课表查询页面
+        classroom_page_url = "http://zhjw.qfnu.edu.cn/jsxsd/kbcx/kbxx_classroom"
+        classroom_response = session.get(classroom_page_url)
+        logging.info(
+            f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}"
+        )
+        # 添加响应文本日志，便于调试
+        logging.debug(f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}")
+
+        # 如果访问课表查询页面失败，记录错误
+        if classroom_response.status_code != 200:
+            logging.error(f"访问课表查询页面失败: {classroom_response.status_code}")
+            return {"error": "访问课表查询页面失败"}
+
+        # 预加载框架，这是查询前的必要步骤
+        kbjcmsid = "94786EE0ABE2D3B2E0531E64A8C09931"  # 课表基础模式ID
+        init_url = f"http://zhjw.qfnu.edu.cn/jsxsd/kbxx/initJc?xnxq={xnxqh}&kbjcmsid={kbjcmsid}"
+        init_response = session.get(init_url)
+        logging.info(f"预加载框架响应状态码: {init_response.status_code}")
+        # 添加响应文本日志，便于调试
+        logging.debug(f"预加载框架响应状态码: {init_response.status_code}")
+
+        # 如果预加载失败，记录错误
+        if init_response.status_code != 200:
+            logging.error(f"预加载框架失败: {init_response.status_code}")
+            return {"error": "预加载框架失败"}
+
+        # 查询课表
+        url = "http://zhjw.qfnu.edu.cn/jsxsd/kbcx/kbxx_classroom_ifr"
+
+        # 构建请求参数
+        data = {
+            "xnxqh": xnxqh,
+            "kbjcmsid": kbjcmsid,  # 使用相同的课表基础模式ID
+            "skyx": "",
+            "xqid": "",
+            "jzwid": "",
+            "skjsid": "",
+            "skjs": room_name,
+            "zc1": str(week),
+            "zc2": str(week),
+            "skxq1": str(day) if day else "",
+            "skxq2": str(day) if day else "",
+            "jc1": "",
+            "jc2": "",
+        }
+
+        # 发送POST请求
+        response = session.post(url, data=data)
+        response.raise_for_status()
+        
+        # 添加响应文本日志，便于调试
+        logging.debug(f"课表查询响应状态码: {response.status_code}")
+
+        # 解析返回的HTML
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # 提取课表信息 - 修改为适应新的HTML结构
+        table = soup.find("table", id="kbtable")
+        if not table:
+            logging.error("未找到课表数据")
+            return {"error": "未找到课表数据"}
+
+        # 解析表格数据
+        result = parse_classtable_new(table, day, room_name)
+
+        return {
+            "status": "success",
+            "room": room_name,
+            "week": week,
+            "day": day,
+            "data": result,
+        }
+
+    except requests.RequestException as e:
+        logging.error(f"获取教室课表失败: {str(e)}")
+        return {"error": f"请求失败: {str(e)}"}
+    except Exception as e:
+        logging.error(f"处理教室课表数据时出错: {str(e)}")
+        return {"error": f"处理数据失败: {str(e)}"}
+
+
+def parse_classtable_new(table, specific_day=None, room_name=None):
+    """
+    解析课表HTML表格 - 适应新的HTML结构
+    
+    参数:
+        table: BeautifulSoup表格对象
+        specific_day: 指定的星期几，如果提供则只返回该天的课表
+        room_name: 教室名称，用于验证
+        
+    返回:
+        dict: 解析后的课表数据
+    """
+    result = {}
+    
+    # 获取表头信息
+    headers_row = table.find("thead").find_all("tr")[1]  # 第二行包含节次信息
+    headers = []
+    
+    # 跳过第一列（教室\节次）
+    for td in headers_row.find_all("td")[1:]:
+        headers.append(td.text.strip())
+    
+    # 获取每个教室的数据
+    for row in table.find_all("tr")[2:]:  # 跳过表头两行
+        cells = row.find_all("td")
+        if not cells:
+            continue
+            
+        # 获取教室名称
+        room = cells[0].text.strip()
+        
+        # 如果指定了教室名称，且不是当前处理的教室，则跳过
+        if room_name and room_name != room:
+            continue
+            
+        # 处理每一天的数据
+        for day_num in range(1, 8):  # 1-7对应周一到周日
+            # 如果指定了特定的天，且不是当前处理的天，则跳过
+            if specific_day and day_num != specific_day:
+                continue
+                
+            day_schedule = {}
+            
+            # 计算当天的起始列索引
+            start_idx = 1 + (day_num - 1) * 6  # 每天6个时间段
+            
+            # 处理当天的每个时间段
+            for i in range(6):  # 每天6个时间段
+                col_idx = start_idx + i
+                if col_idx < len(cells):
+                    cell = cells[col_idx]
+                    period = headers[col_idx - 1]  # 减1是因为headers跳过了第一列
+                    
+                    # 获取课程内容
+                    content = cell.text.strip()
+                    if content and content != " " and content != "&nbsp;":
+                        # 查找课程div
+                        course_div = cell.find("div", class_="kbcontent1")
+                        if course_div:
+                            course_text = course_div.text.strip()
+                            class_data = parse_class_info_new(course_text)
+                            day_schedule[period] = [class_data] if class_data else []
+                        else:
+                            day_schedule[period] = []
+                    else:
+                        day_schedule[period] = []
+            
+            if day_schedule:
+                result[day_num] = day_schedule
+    
+    return result
+
+
+def parse_class_info_new(info_text):
+    """
+    解析课程信息文本 - 适应新的格式
+    
+    参数:
+        info_text: 课程信息文本
+        
+    返回:
+        dict: 解析后的课程信息
+    """
+    if not info_text or info_text.strip() == "" or info_text.strip() == "&nbsp;":
+        return None
+        
+    lines = [line.strip() for line in info_text.split("\n") if line.strip()]
+    if not lines:
+        return None
+        
+    class_info = {}
+    
+    # 第一行通常是课程名称和教师
+    if len(lines) > 0:
+        first_line = lines[0]
+        if "(" in first_line and ")" in first_line:
+            # 尝试分离课程名称和教师
+            parts = first_line.split("(")[0].strip().split()
+            if len(parts) > 1:
+                class_info["course_name"] = "".join(parts[:-1])
+                class_info["teacher"] = parts[-1]
+            else:
+                class_info["course_name"] = first_line
+        else:
+            class_info["course_name"] = first_line
+    
+    # 解析周次信息
+    for line in lines:
+        if "(" in line and ")" in line and "周" in line:
+            weeks_part = line.split("(")[1].split(")")[0]
+            class_info["weeks"] = weeks_part
+            break
+    
+    # 解析班级信息
+    for i, line in enumerate(lines):
+        if i > 0 and not ("(" in line and ")" in line and "周" in line):
+            if "楼" not in line:  # 不是教室信息
+                class_info["class"] = line
+                break
+    
+    # 解析教室信息
+    for line in lines:
+        if "楼" in line:
+            class_info["room"] = line
+            break
+    
+    return class_info
+
+
+def convert_day_to_number(day_name):
+    """
+    将星期名称转换为数字
+    
+    参数:
+        day_name: 星期名称，如"星期一"
+        
+    返回:
+        int: 对应的数字，1-7
+    """
+    day_map = {
+        "星期一": 1,
+        "星期二": 2,
+        "星期三": 3,
+        "星期四": 4,
+        "星期五": 5,
+        "星期六": 6,
+        "星期日": 7,
+        "星期天": 7,
+    }
+    return day_map.get(day_name, 0)

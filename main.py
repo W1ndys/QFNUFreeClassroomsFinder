@@ -8,6 +8,7 @@ import datetime
 from dotenv import load_dotenv
 from src.utils.session_manager import get_session
 from src.utils.captcha_ocr import get_ocr_res
+from src.core.get_room_classtable import get_room_classtable
 import time
 
 
@@ -39,7 +40,7 @@ def setup_logger():
 
     # 配置控制台处理器 - 使用ColoredFormatter
     console_handler = colorlog.StreamHandler()
-    console_handler.setLevel(logging.INFO)  # 设置控制台处理器的日志级别为INFO
+    console_handler.setLevel(logging.INFO)  # 设置控制台处理器的日志级别
     console_formatter = colorlog.ColoredFormatter(
         "%(log_color)s%(levelname)s: %(message)s%(reset)s",
         log_colors={
@@ -187,14 +188,14 @@ def simulate_login(user_account, user_password):
         return False
 
     # 获取必要的cookie
-    cookies = session.cookies
-    logger.info(f"获取到的cookie: {cookies}")
+    # cookies = session.cookies
+    # logger.info(f"获取到的cookie: {cookies}")
 
     for attempt in range(3):
         random_code = handle_captcha()
         logger.info(f"验证码: {random_code}")
         encoded = generate_encoded_string(user_account, user_password)
-        logger.info(f"encoded: {encoded}")
+        # logger.info(f"encoded: {encoded}")
         response = login(random_code, encoded)
         logger.info(f"登录响应: {response.status_code}")
 
@@ -212,7 +213,7 @@ def simulate_login(user_account, user_password):
 
 
 def print_welcome():
-    logger.info(f"\n{'*' * 10} 曲阜师范大学无课查询脚本 {'*' * 10}\n")
+    logger.info(f"\n{'*' * 10} 曲阜师范大学教室上课查询 {'*' * 10}\n")
     logger.info("By W1ndys")
     logger.info("https://github.com/W1ndys")
     logger.info("\n\n")
@@ -260,4 +261,15 @@ def main():
 
 
 if __name__ == "__main__":
+
+    # 打印欢迎信息
+    print_welcome()
     main()
+
+    # 获取课表
+    xnxqh = "2024-2025-2"
+    room_name = "格物楼B212"
+    week = 4
+    day = 2
+    classtable = get_room_classtable(xnxqh, room_name, week, day)
+    logger.info(f"课表: {classtable}")
