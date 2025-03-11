@@ -6,8 +6,8 @@ import colorlog
 import logging
 import datetime
 from dotenv import load_dotenv
-from utils.session_manager import get_session
-from utils.captcha_ocr import get_ocr_res
+from src.utils.session_manager import get_session
+from src.utils.captcha_ocr import get_ocr_res
 import time
 
 
