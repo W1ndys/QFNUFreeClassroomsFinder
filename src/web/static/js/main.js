@@ -44,12 +44,10 @@ function fetchBuildings() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                const buildingSelect = document.getElementById('free-building');
+                const buildingDatalist = document.getElementById('building-list');
                 
-                // 清空现有选项（保留提示选项）
-                const defaultOption = buildingSelect.querySelector('option[value=""]');
-                buildingSelect.innerHTML = '';
-                buildingSelect.appendChild(defaultOption);
+                // 清空现有选项
+                buildingDatalist.innerHTML = '';
                 
                 // 添加教学楼选项
                 const buildings = Object.keys(data.data).sort((a, b) => {
@@ -63,11 +61,17 @@ function fetchBuildings() {
                 
                 buildings.forEach(building => {
                     const option = document.createElement('option');
-                    option.value = building;
-                    // 获取该教学楼的教室数量
                     const roomCount = data.data[building].length;
-                    option.textContent = `${building}楼 (${roomCount}间)`;
-                    buildingSelect.appendChild(option);
+                    option.value = building;
+                    option.label = `${building} (${roomCount}间)`;
+                    buildingDatalist.appendChild(option);
+                });
+
+                // 添加输入框事件监听
+                const buildingInput = document.getElementById('free-building');
+                buildingInput.addEventListener('input', function() {
+                    // 转换输入值为大写
+                    this.value = this.value.toUpperCase();
                 });
             }
         })

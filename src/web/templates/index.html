@@ -106,10 +106,10 @@
                         <form id="free-classroom-form">
                             <div class="mb-3">
                                 <label for="free-building" class="form-label">教学楼</label>
-                                <select class="form-select" id="free-building" required>
-                                    <option value="" disabled selected>请选择教学楼</option>
+                                <input type="text" class="form-control" id="free-building" list="building-list" placeholder="输入教学楼名称搜索" required>
+                                <datalist id="building-list">
                                     <!-- 将通过JS动态填充 -->
-                                </select>
+                                </datalist>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">时间段（可多选）</label>
