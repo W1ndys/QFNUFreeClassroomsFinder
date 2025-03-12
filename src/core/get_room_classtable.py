@@ -10,12 +10,12 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
 
     参数:
         xnxqh (str): 学年学期，格式如 "2024-2025-2"
-        room_name (str): 教室名称，如 "格物楼A104"
+        room_name (str): 教室名称前缀，如 "格物楼B"将匹配所有以"格物楼B"开头的教室
         week (int): 周次，如 3
         day (int, optional): 星期几，1-7，如果不指定则返回整周课表
 
     返回:
-        dict: 课表信息
+        dict: 课表信息，包含匹配前缀的所有教室数据
     """
     try:
         session = get_session()
@@ -27,7 +27,9 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
             f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}"
         )
         # 添加响应文本日志，便于调试
-        logging.debug(f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}")
+        logging.debug(
+            f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}"
+        )
 
         # 如果访问课表查询页面失败，记录错误
         if classroom_response.status_code != 200:
@@ -70,7 +72,7 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
         # 发送POST请求
         response = session.post(url, data=data)
         response.raise_for_status()
-        
+
         # 添加响应文本日志，便于调试
         logging.debug(f"课表查询响应状态码: {response.status_code}")
 
@@ -105,56 +107,60 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
 def parse_classtable_new(table, specific_day=None, room_name=None):
     """
     解析课表HTML表格 - 适应新的HTML结构
-    
+
     参数:
         table: BeautifulSoup表格对象
         specific_day: 指定的星期几，如果提供则只返回该天的课表
-        room_name: 教室名称，用于验证
-        
+        room_name: 教室名称前缀，如果提供则返回所有匹配前缀的教室课表
+
     返回:
-        dict: 解析后的课表数据
+        dict: 解析后的课表数据，按教室组织
     """
-    result = {}
-    
+    rooms_data = []
+
     # 获取表头信息
     headers_row = table.find("thead").find_all("tr")[1]  # 第二行包含节次信息
-    headers = []
-    
+    periods = []
+
     # 跳过第一列（教室\节次）
     for td in headers_row.find_all("td")[1:]:
-        headers.append(td.text.strip())
-    
+        periods.append(td.text.strip())
+
     # 获取每个教室的数据
     for row in table.find_all("tr")[2:]:  # 跳过表头两行
         cells = row.find_all("td")
-        if not cells:
+        if not cells or len(cells) <= 1:
             continue
-            
-        # 获取教室名称
-        room = cells[0].text.strip()
-        
-        # 如果指定了教室名称，且不是当前处理的教室，则跳过
-        if room_name and room_name != room:
+
+        # 获取教室名
+        current_room_name = cells[0].text.strip()
+
+        # 如果指定了教室名前缀，且当前教室名不是以该前缀开头，则跳过
+        if room_name and not current_room_name.startswith(room_name):
             continue
-            
+
+        room_schedule = {}
+        has_classes = False  # 标记该教室是否有课
+
         # 处理每一天的数据
         for day_num in range(1, 8):  # 1-7对应周一到周日
             # 如果指定了特定的天，且不是当前处理的天，则跳过
             if specific_day and day_num != specific_day:
                 continue
-                
+
             day_schedule = {}
-            
+
             # 计算当天的起始列索引
             start_idx = 1 + (day_num - 1) * 6  # 每天6个时间段
-            
+
             # 处理当天的每个时间段
+            has_day_classes = False
             for i in range(6):  # 每天6个时间段
                 col_idx = start_idx + i
                 if col_idx < len(cells):
                     cell = cells[col_idx]
-                    period = headers[col_idx - 1]  # 减1是因为headers跳过了第一列
-                    
+                    period = periods[col_idx - 1]  # 获取对应的时间段
+
                     # 获取课程内容
                     content = cell.text.strip()
                     if content and content != " " and content != "&nbsp;":
@@ -163,37 +169,43 @@ def parse_classtable_new(table, specific_day=None, room_name=None):
                         if course_div:
                             course_text = course_div.text.strip()
                             class_data = parse_class_info_new(course_text)
-                            day_schedule[period] = [class_data] if class_data else []
-                        else:
-                            day_schedule[period] = []
-                    else:
-                        day_schedule[period] = []
-            
-            if day_schedule:
-                result[day_num] = day_schedule
-    
-    return result
+                            if class_data:
+                                day_schedule[period] = [class_data]
+                                has_classes = True
+                                has_day_classes = True
+
+            # 只有当这一天有课时，才添加到结果中
+            if has_day_classes:
+                if str(day_num) not in room_schedule:
+                    room_schedule[str(day_num)] = {}
+                room_schedule[str(day_num)].update(day_schedule)
+
+        # 只有当教室有课时，才添加到结果中
+        if has_classes:
+            rooms_data.append({"name": current_room_name, "schedule": room_schedule})
+
+    return rooms_data
 
 
 def parse_class_info_new(info_text):
     """
     解析课程信息文本 - 适应新的格式
-    
+
     参数:
         info_text: 课程信息文本
-        
+
     返回:
         dict: 解析后的课程信息
     """
     if not info_text or info_text.strip() == "" or info_text.strip() == "&nbsp;":
         return None
-        
+
     lines = [line.strip() for line in info_text.split("\n") if line.strip()]
     if not lines:
         return None
-        
+
     class_info = {}
-    
+
     # 第一行通常是课程名称和教师
     if len(lines) > 0:
         first_line = lines[0]
@@ -207,37 +219,37 @@ def parse_class_info_new(info_text):
                 class_info["course_name"] = first_line
         else:
             class_info["course_name"] = first_line
-    
+
     # 解析周次信息
     for line in lines:
         if "(" in line and ")" in line and "周" in line:
             weeks_part = line.split("(")[1].split(")")[0]
             class_info["weeks"] = weeks_part
             break
-    
+
     # 解析班级信息
     for i, line in enumerate(lines):
         if i > 0 and not ("(" in line and ")" in line and "周" in line):
             if "楼" not in line:  # 不是教室信息
                 class_info["class"] = line
                 break
-    
+
     # 解析教室信息
     for line in lines:
         if "楼" in line:
             class_info["room"] = line
             break
-    
+
     return class_info
 
 
 def convert_day_to_number(day_name):
     """
     将星期名称转换为数字
-    
+
     参数:
         day_name: 星期名称，如"星期一"
-        
+
     返回:
         int: 对应的数字，1-7
     """

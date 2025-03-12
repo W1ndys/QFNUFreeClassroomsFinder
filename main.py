@@ -268,8 +268,8 @@ if __name__ == "__main__":
 
     # 获取课表
     xnxqh = "2024-2025-2"
-    room_name = "格物楼B212"
+    room_name = "格物楼B2"
     week = 4
-    day = 2
+    day = 3
     classtable = get_room_classtable(xnxqh, room_name, week, day)
     logger.info(f"课表: {classtable}")
