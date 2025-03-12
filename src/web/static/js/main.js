@@ -185,16 +185,58 @@ function fetchCurrentWeekDay(term) {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // 设置当前周次
+                // 更新周次选择框
                 const weekSelect = document.getElementById('week');
-                if (weekSelect && data.current_week) {
-                    weekSelect.value = data.current_week;
+                const freeWeekSelect = document.getElementById('free-week');
+                
+                // 清空现有选项
+                weekSelect.innerHTML = '';
+                if (freeWeekSelect) {
+                    freeWeekSelect.innerHTML = '';
                 }
                 
-                // 设置当前星期
+                // 添加周次选项
+                for (let i = 1; i <= 20; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.text = `第${i}周`;
+                    
+                    // 设置当前周为默认选中
+                    if (i === data.current_week) {
+                        option.selected = true;
+                    }
+                    
+                    weekSelect.appendChild(option);
+                    
+                    // 同时更新空闲教室查询的周次选择框
+                    if (freeWeekSelect) {
+                        const freeOption = option.cloneNode(true);
+                        freeWeekSelect.appendChild(freeOption);
+                    }
+                }
+                
+                // 更新星期选择框
                 const daySelect = document.getElementById('day');
-                if (daySelect && data.current_day) {
-                    daySelect.value = data.current_day;
+                const freeDaySelect = document.getElementById('free-day');
+                
+                // 设置当前星期为默认选中
+                if (daySelect) {
+                    for (let i = 0; i < daySelect.options.length; i++) {
+                        if (daySelect.options[i].value == data.current_day) {
+                            daySelect.options[i].selected = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // 同时更新空闲教室查询的星期选择框
+                if (freeDaySelect) {
+                    for (let i = 0; i < freeDaySelect.options.length; i++) {
+                        if (freeDaySelect.options[i].value == data.current_day) {
+                            freeDaySelect.options[i].selected = true;
+                            break;
+                        }
+                    }
                 }
                 
                 // 显示当前周次和星期的提示
@@ -396,8 +438,8 @@ function bindEvents() {
 // 处理空闲教室查询
 function handleFreeClassroomQuery() {
     const xnxqh = document.getElementById('xnxqh').value;
-    const week = document.getElementById('week').value;
-    const day = document.getElementById('day').value || document.getElementById('day').options[1].value; // 如果未选择，默认为周一
+    const week = document.getElementById('free-week').value;
+    const day = document.getElementById('free-day').value;
     const buildingPrefix = document.getElementById('free-building').value;
     
     // 检查是否选择了教学楼
@@ -780,13 +822,13 @@ function handleLogout() {
 }
 
 // 处理查询
-function handleQuery() {
+async function handleQuery() {
     const xnxqh = document.getElementById('xnxqh').value;
-    const roomName = document.getElementById('room_name').value;
+    const room_name = document.getElementById('room_name').value;
     const week = document.getElementById('week').value;
     const day = document.getElementById('day').value;
     
-    if (!xnxqh || !roomName || !week) {
+    if (!xnxqh || !room_name || !week) {
         showMessage('result-container', '请填写完整的查询信息', 'warning');
         return;
     }
@@ -806,54 +848,58 @@ function handleQuery() {
     
     // 清空结果容器并显示加载提示
     const resultContainer = document.getElementById('result-container');
-    resultContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">正在查询，请稍候...</p></div>';
+    resultContainer.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">正在查询课表数据...</p>
+        </div>
+    `;
     
-    // 发送查询请求
-    fetch('/query_classtable', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            xnxqh: xnxqh,
-            room_name: roomName,
-            week: week,
-            day: day
-        })
-    })
-    .then(response => {
+    try {
+        const response = await fetch('/query_classtable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                xnxqh,
+                room_name,
+                week,
+                day
+            })
+        });
+        
         if (response.status === 401) {
             // 未登录，显示错误并滚动到登录区域
             showMessage('result-container', '您尚未登录或登录已过期，请先登录', 'danger');
             document.getElementById('login-section').scrollIntoView({ behavior: 'smooth' });
             throw new Error('未登录');
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.status === 'success') {
-            // 渲染查询结果
-            renderClassTable(data, roomName, week, day);
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            renderClassTable(result.data, room_name, week, day);
         } else {
-            showMessage('result-container', '查询失败: ' + data.message, 'danger');
+            showMessage('result-container', '查询失败: ' + result.message, 'danger');
         }
-    })
-    .catch(error => {
+    } catch (error) {
         if (error.message !== '未登录') {
             showMessage('result-container', '查询请求出错: ' + error, 'danger');
         }
-    })
-    .finally(() => {
+    } finally {
         // 恢复按钮状态
         queryBtn.textContent = originalBtnText;
         queryBtn.disabled = false;
-    });
+    }
 }
 
 // 渲染课表
 function renderClassTable(data, roomName, week, day) {
     const resultContainer = document.getElementById('result-container');
-    const roomsData = data.data;
+    const roomsData = data;
     
     // 如果没有数据
     if (!roomsData || roomsData.length === 0) {
@@ -861,18 +907,24 @@ function renderClassTable(data, roomName, week, day) {
         return;
     }
     
+    // 显示结果区域
+    document.getElementById('result-section').classList.remove('d-none');
+    
+    // 获取星期几的名称
+    const dayName = day ? getDayName(day) : '';
+    
     let html = `<div class="alert alert-success">查询成功！找到 ${roomsData.length} 个匹配的教室</div>`;
     
-    // 遍历每个教室
+    // 遍历每个匹配的教室
     roomsData.forEach(room => {
-        html += `<h4 class="room-title">${room.name}</h4>`;
+        // 添加教室标题
+        html += `<h4 class="room-title"><i class="fas fa-door-open me-2"></i>${room.name}</h4>`;
         
-        // 创建课表
+        // 如果指定了星期几，只显示该天的课表
         if (day) {
-            // 单日课表
             html += createDayTable(room, day);
         } else {
-            // 整周课表
+            // 否则显示整周课表
             html += createWeekTable(room);
         }
     });

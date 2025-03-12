@@ -455,38 +455,43 @@ def get_free_classrooms():
         else:
             buildings = classrooms_data
 
+        # 一次性查询所有教室，使用前缀匹配
+        result = get_room_classtable(xnxqh, building_prefix, week, day)
+
+        # 存储有课教室信息
+        occupied_rooms = set()
+
+        if result["status"] == "success" and result["data"]:
+            # 处理查询结果，找出有课的教室
+            for room_data in result["data"]:
+                room_name = room_data["name"]
+
+                # 检查所有指定时间段是否都空闲
+                is_occupied = False
+                if str(day) in room_data["schedule"]:
+                    day_schedule = room_data["schedule"][str(day)]
+                    for period in periods:
+                        if period in day_schedule and day_schedule[period]:
+                            is_occupied = True
+                            break
+
+                # 如果有课，添加到有课教室集合
+                if is_occupied:
+                    occupied_rooms.add(room_name)
+
         # 存储空闲教室和有课教室
         free_classrooms = {}
         occupied_classrooms = {}
 
-        # 遍历每个建筑物的教室
+        # 根据 classrooms.json 和查询结果，分类教室
         for building, rooms in buildings.items():
             free_classrooms[building] = []
             occupied_classrooms[building] = []
 
             for room in rooms:
-                # 查询该教室的课表
-                result = get_room_classtable(xnxqh, room, week, day)
-
-                if result["status"] == "success" and result["data"]:
-                    room_data = result["data"][0]  # 获取第一个匹配的教室
-
-                    # 检查所有指定时间段是否都空闲
-                    is_free = True
-                    if day in room_data["schedule"]:
-                        day_schedule = room_data["schedule"][day]
-                        for period in periods:
-                            if period in day_schedule and day_schedule[period]:
-                                is_free = False
-                                break
-
-                    # 根据是否有课，添加到相应列表
-                    if is_free:
-                        free_classrooms[building].append(room)
-                    else:
-                        occupied_classrooms[building].append(room)
+                if room in occupied_rooms:
+                    occupied_classrooms[building].append(room)
                 else:
-                    # 如果查询失败，默认为空闲
                     free_classrooms[building].append(room)
 
         return jsonify(
