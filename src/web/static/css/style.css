@@ -97,6 +97,72 @@ body {
     color: #1e88e5;
 }
 
+/* 空闲教室样式 */
+.classroom-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.classroom-item {
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.free-classroom {
+    background-color: #e8f5e9;
+    border: 1px solid #c8e6c9;
+    color: #2e7d32;
+}
+
+.free-classroom:hover {
+    background-color: #c8e6c9;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.occupied-classroom {
+    background-color: #ffebee;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
+}
+
+.occupied-classroom:hover {
+    background-color: #ffcdd2;
+}
+
+.building-section {
+    margin-bottom: 20px;
+    border-left: 4px solid #1e88e5;
+    padding-left: 10px;
+}
+
+.building-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #1e88e5;
+}
+
+.free-classroom-highlight {
+    background-color: #4caf50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.classroom-count {
+    font-size: 14px;
+    color: #757575;
+    margin-left: 10px;
+}
+
 /* 广告/宣传区域样式 */
 #announcement-card {
     border-left: 4px solid #ffc107;

@@ -31,8 +31,39 @@ function initPage() {
             fetchCurrentWeekDay(term);
         });
     
+    // 获取教学楼列表
+    fetchBuildings();
+    
     // 检查登录状态
     checkLoginStatus();
+}
+
+// 获取教学楼列表
+function fetchBuildings() {
+    fetch('/api/classrooms')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const buildingSelect = document.getElementById('free-building');
+                
+                // 清空现有选项（保留"全部"选项）
+                const allOption = buildingSelect.querySelector('option[value=""]');
+                buildingSelect.innerHTML = '';
+                buildingSelect.appendChild(allOption);
+                
+                // 添加教学楼选项
+                const buildings = Object.keys(data.data).sort();
+                buildings.forEach(building => {
+                    const option = document.createElement('option');
+                    option.value = building;
+                    option.textContent = `${building}`;
+                    buildingSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('获取教学楼列表失败:', error);
+        });
 }
 
 // 获取当前学期
@@ -275,6 +306,12 @@ function bindEvents() {
         handleQuery();
     });
     
+    // 空闲教室查询表单提交
+    document.getElementById('free-classroom-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleFreeClassroomQuery();
+    });
+    
     // 学期选择变化时，重新获取当前周次和星期
     const xnxqhSelect = document.getElementById('xnxqh');
     if (xnxqhSelect) {
@@ -282,6 +319,213 @@ function bindEvents() {
             fetchCurrentWeekDay(this.value);
         });
     }
+}
+
+// 处理空闲教室查询
+function handleFreeClassroomQuery() {
+    const xnxqh = document.getElementById('xnxqh').value;
+    const week = document.getElementById('week').value;
+    const day = document.getElementById('day').value || document.getElementById('day').options[1].value; // 如果未选择，默认为周一
+    const period = document.getElementById('free-period').value;
+    const buildingPrefix = document.getElementById('free-building').value;
+    
+    if (!xnxqh || !week || !day || !period) {
+        showMessage('free-classroom-container', '请填写完整的查询信息', 'warning');
+        return;
+    }
+    
+    // 显示加载状态
+    const freeClassroomBtn = document.getElementById('free-classroom-btn');
+    const originalBtnText = freeClassroomBtn.textContent;
+    freeClassroomBtn.textContent = '查询中...';
+    freeClassroomBtn.disabled = true;
+    
+    // 显示结果区域
+    const freeClassroomSection = document.getElementById('free-classroom-section');
+    freeClassroomSection.classList.remove('d-none');
+    
+    // 清空结果容器并显示加载提示
+    const freeClassroomContainer = document.getElementById('free-classroom-container');
+    freeClassroomContainer.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">正在查询空闲教室，请稍候...</p></div>';
+    
+    // 隐藏普通查询结果区域
+    document.getElementById('result-section').classList.add('d-none');
+    
+    // 发送查询请求
+    fetch('/api/free_classrooms', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            xnxqh: xnxqh,
+            week: week,
+            day: day,
+            period: period,
+            building_prefix: buildingPrefix
+        })
+    })
+    .then(response => {
+        if (response.status === 401) {
+            // 未登录，显示错误并滚动到登录区域
+            showMessage('free-classroom-container', '您尚未登录或登录已过期，请先登录', 'danger');
+            document.getElementById('login-section').scrollIntoView({ behavior: 'smooth' });
+            throw new Error('未登录');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // 渲染空闲教室结果
+            renderFreeClassrooms(data, period, day);
+        } else {
+            showMessage('free-classroom-container', '查询失败: ' + data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        if (error.message !== '未登录') {
+            showMessage('free-classroom-container', '查询请求出错: ' + error, 'danger');
+        }
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        freeClassroomBtn.textContent = originalBtnText;
+        freeClassroomBtn.disabled = false;
+    });
+}
+
+// 渲染空闲教室结果
+function renderFreeClassrooms(data, period, day) {
+    const freeClassroomContainer = document.getElementById('free-classroom-container');
+    const freeClassrooms = data.free_classrooms;
+    const occupiedClassrooms = data.occupied_classrooms;
+    
+    // 获取星期几的名称
+    const dayName = getDayName(day);
+    
+    // 计算总空闲教室数量
+    let totalFreeCount = 0;
+    Object.values(freeClassrooms).forEach(rooms => {
+        totalFreeCount += rooms.length;
+    });
+    
+    // 如果没有数据
+    if (totalFreeCount === 0) {
+        freeClassroomContainer.innerHTML = `<div class="alert alert-info">未找到空闲教室</div>`;
+        return;
+    }
+    
+    let html = `
+        <div class="alert alert-success">
+            查询成功！星期${dayName} ${period}共找到 <strong>${totalFreeCount}</strong> 个空闲教室
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">空闲教室列表</h5>
+                    </div>
+                    <div class="card-body">
+    `;
+    
+    // 按建筑物分组显示空闲教室
+    const buildings = Object.keys(freeClassrooms).sort();
+    
+    buildings.forEach(building => {
+        const rooms = freeClassrooms[building];
+        if (rooms.length > 0) {
+            html += `
+                <div class="building-section">
+                    <div class="building-title">
+                        ${building}楼
+                        <span class="free-classroom-highlight">空闲 ${rooms.length} 间</span>
+                    </div>
+                    <div class="classroom-list">
+            `;
+            
+            // 添加空闲教室
+            rooms.sort().forEach(room => {
+                html += `<div class="classroom-item free-classroom" onclick="selectClassroom('${room}')">${room}</div>`;
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 添加有课教室部分（折叠起来）
+    let totalOccupiedCount = 0;
+    Object.values(occupiedClassrooms).forEach(rooms => {
+        totalOccupiedCount += rooms.length;
+    });
+    
+    if (totalOccupiedCount > 0) {
+        html += `
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <button class="btn btn-link collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#occupiedClassrooms" aria-expanded="false" aria-controls="occupiedClassrooms">
+                                显示有课教室 (${totalOccupiedCount} 间)
+                            </button>
+                        </div>
+                        <div id="occupiedClassrooms" class="collapse">
+                            <div class="card-body">
+        `;
+        
+        // 按建筑物分组显示有课教室
+        buildings.forEach(building => {
+            const rooms = occupiedClassrooms[building];
+            if (rooms && rooms.length > 0) {
+                html += `
+                    <div class="building-section">
+                        <div class="building-title">
+                            ${building}楼
+                            <span class="classroom-count">有课 ${rooms.length} 间</span>
+                        </div>
+                        <div class="classroom-list">
+                `;
+                
+                // 添加有课教室
+                rooms.sort().forEach(room => {
+                    html += `<div class="classroom-item occupied-classroom" onclick="selectClassroom('${room}')">${room}</div>`;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    freeClassroomContainer.innerHTML = html;
+}
+
+// 选择教室并填充到查询表单
+function selectClassroom(roomName) {
+    document.getElementById('room_name').value = roomName;
+    document.getElementById('query-btn').click();
+    
+    // 滚动到查询结果
+    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
 }
 
 // 刷新验证码
@@ -419,6 +663,7 @@ function handleLogout() {
             document.getElementById('user-info-section').classList.add('d-none');
             document.getElementById('query-btn').disabled = true;
             document.getElementById('result-section').classList.add('d-none');
+            document.getElementById('free-classroom-section').classList.add('d-none');
             
             // 刷新验证码
             refreshCaptcha();
@@ -457,6 +702,9 @@ function handleQuery() {
     // 显示结果区域
     const resultSection = document.getElementById('result-section');
     resultSection.classList.remove('d-none');
+    
+    // 隐藏空闲教室结果区域
+    document.getElementById('free-classroom-section').classList.add('d-none');
     
     // 清空结果容器并显示加载提示
     const resultContainer = document.getElementById('result-container');

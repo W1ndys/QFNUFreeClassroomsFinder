@@ -96,6 +96,38 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- 空闲教室查询 -->
+                <div class="card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">空闲教室查询</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="free-classroom-form">
+                            <div class="mb-3">
+                                <label for="free-building" class="form-label">教学楼</label>
+                                <select class="form-select" id="free-building">
+                                    <option value="">全部</option>
+                                    <!-- 将通过JS动态填充 -->
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="free-period" class="form-label">时间段</label>
+                                <select class="form-select" id="free-period" required>
+                                    <option value="第一节">第一节 (8:00-9:40)</option>
+                                    <option value="第二节">第二节 (10:00-11:40)</option>
+                                    <option value="第三节">第三节 (14:00-15:40)</option>
+                                    <option value="第四节">第四节 (16:00-17:40)</option>
+                                    <option value="第五节">第五节 (19:00-20:40)</option>
+                                    <option value="第六节">第六节 (20:50-22:30)</option>
+                                </select>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary" id="free-classroom-btn">查询空闲教室</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <!-- 查询区域 -->
@@ -145,6 +177,18 @@
                                 <button type="submit" class="btn btn-info text-white" id="query-btn" disabled>查询</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- 空闲教室结果区域 -->
+                <div class="card mt-4 d-none" id="free-classroom-section">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">空闲教室查询结果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="free-classroom-container">
+                            <!-- 空闲教室结果将在这里显示 -->
+                        </div>
                     </div>
                 </div>
 
