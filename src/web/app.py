@@ -241,35 +241,26 @@ def query_classtable():
 def get_current_term():
     """获取当前学期"""
     try:
-        # 直接返回当前学期为2024-2025-2
-        return jsonify({"status": "success", "current_term": "2024-2025-2"})
+        now = datetime.now()
+        year = now.year
+        month = now.month
 
-        # 以下是原来的逻辑，现在被注释掉
-        """
-        # 获取当前日期
-        today = datetime.now().date()
+        if month >= 9:
+            start_year = year
+            end_year = year + 1
+            term = 1
+        elif month <= 1:
+            start_year = year - 1
+            end_year = year
+            term = 1
+        else:
+            start_year = year - 1
+            end_year = year
+            term = 2
 
-        # 确定当前学期
-        current_term = None
-        for term, start_date in SEMESTER_START_DATES.items():
-            start_date_obj = datetime.strptime(start_date, "%Y-%m-%d").date()
+        current_term = f"{start_year}-{end_year}-{term}"
+        return jsonify({"status": "success", "current_term": current_term})
 
-            # 简单判断：如果当前日期在该学期开始日期之后，且相差不超过200天，则认为是当前学期
-            days_diff = (today - start_date_obj).days
-            if 0 <= days_diff <= 200:
-                current_term = term
-                break
-
-        # 如果没有找到匹配的学期，使用最近的一个学期
-        if not current_term and SEMESTER_START_DATES:
-            # 按开始日期排序，取最近的一个
-            sorted_terms = sorted(
-                SEMESTER_START_DATES.items(),
-                key=lambda x: datetime.strptime(x[1], "%Y-%m-%d").date(),
-                reverse=True,
-            )
-            current_term = sorted_terms[0][0]
-        """
     except Exception as e:
         logger.error(f"获取当前学期出错: {str(e)}")
         return jsonify({"status": "error", "message": str(e)})
