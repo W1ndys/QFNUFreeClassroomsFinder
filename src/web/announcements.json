@@ -1,0 +1,10 @@
+{
+    "top": {
+        "title": "加入我们的交流群",
+        "content": "<div class='row'><div class='col-md-8'><h5>欢迎加入曲阜师范大学课表查询交流群！</h5><p>在这里您可以与其他同学交流使用心得，获取最新功能更新，以及提出宝贵建议。</p><p>QQ群号：<strong>497554955</strong></p></div><div class='col-md-4 text-center'><img src='/static/images/qq_group.png' alt='QQ群二维码' class='img-fluid' style='max-width: 150px;'></div></div>"
+    },
+    "bottom": {
+        "title": "更多校园工具",
+        "content": "<div class='row'><div class='col-md-12'><div class='d-flex flex-wrap justify-content-around'><a href='#' class='btn btn-outline-primary m-2'>校园导航</a><a href='#' class='btn btn-outline-primary m-2'>考试时间查询</a><a href='#' class='btn btn-outline-primary m-2'>图书馆座位预约</a></div></div></div>"
+    }
+} 

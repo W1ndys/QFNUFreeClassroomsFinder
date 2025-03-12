@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 绑定事件
     bindEvents();
+    
+    // 初始化广告/宣传区域
+    initAnnouncements();
 });
 
 // 初始化页面
@@ -22,10 +25,228 @@ function initPage() {
     }
     
     // 获取当前学期
-    fetchCurrentTerm();
+    fetchCurrentTerm()
+        .then(term => {
+            // 获取当前周次和星期
+            fetchCurrentWeekDay(term);
+        });
     
     // 检查登录状态
     checkLoginStatus();
+}
+
+// 获取当前学期
+function fetchCurrentTerm() {
+    return fetch('/get_current_term')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const xnxqhSelect = document.getElementById('xnxqh');
+                
+                // 清空现有选项
+                xnxqhSelect.innerHTML = '';
+                
+                // 生成学期列表（前后各两个学期）
+                const [year1, year2, term] = data.current_term.split('-');
+                const baseYear = parseInt(year1);
+                
+                // 创建学期列表数组
+                let termsList = [];
+                
+                // 添加当前学期
+                termsList.push({
+                    value: data.current_term,
+                    text: `${data.current_term} (当前学期)`,
+                    isCurrent: true,
+                    sortKey: `${year1}-${year2}-${term}`
+                });
+                
+                // 前两个学期
+                for (let i = 1; i <= 2; i++) {
+                    let prevYear1, prevYear2, prevTerm;
+                    
+                    if (term === '1') {
+                        prevYear1 = baseYear - Math.ceil(i/2);
+                        prevYear2 = baseYear - Math.ceil(i/2) + 1;
+                        prevTerm = i % 2 === 0 ? '1' : '2';
+                    } else {
+                        prevYear1 = baseYear - Math.ceil(i/2);
+                        prevYear2 = baseYear - Math.ceil(i/2) + 1;
+                        prevTerm = i % 2 === 1 ? '1' : '2';
+                    }
+                    
+                    const prevTermValue = `${prevYear1}-${prevYear2}-${prevTerm}`;
+                    termsList.push({
+                        value: prevTermValue,
+                        text: prevTermValue,
+                        isCurrent: false,
+                        sortKey: `${prevYear1}-${prevYear2}-${prevTerm}`
+                    });
+                }
+                
+                // 后两个学期
+                for (let i = 1; i <= 2; i++) {
+                    let nextYear1, nextYear2, nextTerm;
+                    
+                    if (term === '1') {
+                        nextYear1 = baseYear + Math.floor(i/2);
+                        nextYear2 = baseYear + Math.floor(i/2) + 1;
+                        nextTerm = i % 2 === 1 ? '2' : '1';
+                    } else {
+                        nextYear1 = baseYear + Math.ceil(i/2);
+                        nextYear2 = baseYear + Math.ceil(i/2) + 1;
+                        nextTerm = i % 2 === 1 ? '1' : '2';
+                    }
+                    
+                    const nextTermValue = `${nextYear1}-${nextYear2}-${nextTerm}`;
+                    termsList.push({
+                        value: nextTermValue,
+                        text: nextTermValue,
+                        isCurrent: false,
+                        sortKey: `${nextYear1}-${nextYear2}-${nextTerm}`
+                    });
+                }
+                
+                // 按时间顺序排序（从早到晚）
+                termsList.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+                
+                // 将排序后的学期添加到下拉框
+                termsList.forEach(termItem => {
+                    const option = document.createElement('option');
+                    option.value = termItem.value;
+                    option.textContent = termItem.text;
+                    option.selected = termItem.isCurrent;
+                    xnxqhSelect.appendChild(option);
+                });
+                
+                // 立即获取当前周次和星期
+                fetchCurrentWeekDay(data.current_term);
+                
+                return data.current_term;
+            }
+            return null;
+        })
+        .catch(error => {
+            console.error('获取当前学期失败:', error);
+            return null;
+        });
+}
+
+// 获取当前周次和星期
+function fetchCurrentWeekDay(term) {
+    if (!term) return;
+    
+    fetch(`/get_current_week_day?term=${term}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 设置当前周次
+                const weekSelect = document.getElementById('week');
+                if (weekSelect && data.current_week) {
+                    weekSelect.value = data.current_week;
+                }
+                
+                // 设置当前星期
+                const daySelect = document.getElementById('day');
+                if (daySelect && data.current_day) {
+                    daySelect.value = data.current_day;
+                }
+                
+                // 显示当前周次和星期的提示
+                const weekInfo = document.getElementById('week-info');
+                const weekDayInfo = document.getElementById('week-day-info');
+                if (weekInfo) {
+                    weekInfo.style.display = 'block';
+                }
+                if (weekDayInfo) {
+                    weekDayInfo.textContent = `当前是第${data.current_week}周，星期${getDayName(data.current_day)}`;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('获取当前周次和星期失败:', error);
+        });
+}
+
+// 获取星期几的名称
+function getDayName(day) {
+    const dayNames = ['一', '二', '三', '四', '五', '六', '日'];
+    return dayNames[day - 1] || '';
+}
+
+// 初始化广告/宣传区域
+function initAnnouncements() {
+    // 顶部公告关闭按钮
+    const closeAnnouncementBtn = document.getElementById('close-announcement');
+    if (closeAnnouncementBtn) {
+        closeAnnouncementBtn.addEventListener('click', function() {
+            const announcementCard = document.getElementById('announcement-card');
+            announcementCard.style.display = 'none';
+            
+            // 记住用户关闭了公告
+            localStorage.setItem('announcement_closed', 'true');
+        });
+    }
+    
+    // 从本地存储中检查是否已关闭过公告
+    if (localStorage.getItem('announcement_closed') === 'true') {
+        const announcementCard = document.getElementById('announcement-card');
+        if (announcementCard) {
+            announcementCard.style.display = 'none';
+        }
+    }
+    
+    // 加载广告内容
+    loadAnnouncementContent();
+}
+
+// 加载广告/宣传内容
+function loadAnnouncementContent() {
+    // 从服务器获取最新的广告/宣传内容
+    fetch('/api/announcements')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // 更新顶部公告
+                const topAnnouncement = data.data.top;
+                if (topAnnouncement) {
+                    const announcementCard = document.getElementById('announcement-card');
+                    const announcementContent = document.getElementById('announcement-content');
+                    
+                    if (announcementCard && announcementContent) {
+                        // 更新标题
+                        const headerTitle = announcementCard.querySelector('.card-header h5');
+                        if (headerTitle) {
+                            headerTitle.textContent = topAnnouncement.title;
+                        }
+                        
+                        // 更新内容
+                        announcementContent.innerHTML = topAnnouncement.content;
+                    }
+                }
+                
+                // 更新底部广告
+                const bottomAd = data.data.bottom;
+                if (bottomAd) {
+                    const bottomAdCard = document.getElementById('bottom-ad-card');
+                    const bottomAdContent = document.getElementById('bottom-ad-content');
+                    
+                    if (bottomAdCard && bottomAdContent) {
+                        // 更新标题
+                        const headerTitle = bottomAdCard.querySelector('.card-header h5');
+                        if (headerTitle) {
+                            headerTitle.textContent = bottomAd.title;
+                        }
+                        
+                        // 更新内容
+                        bottomAdContent.innerHTML = bottomAd.content;
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('获取公告内容失败:', error);
+        });
 }
 
 // 绑定事件
@@ -53,6 +274,14 @@ function bindEvents() {
         e.preventDefault();
         handleQuery();
     });
+    
+    // 学期选择变化时，重新获取当前周次和星期
+    const xnxqhSelect = document.getElementById('xnxqh');
+    if (xnxqhSelect) {
+        xnxqhSelect.addEventListener('change', function() {
+            fetchCurrentWeekDay(this.value);
+        });
+    }
 }
 
 // 刷新验证码
@@ -395,75 +624,6 @@ function createWeekTable(room) {
     
     html += `</tbody></table>`;
     return html;
-}
-
-// 获取当前学期
-function fetchCurrentTerm() {
-    fetch('/get_current_term')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const xnxqhSelect = document.getElementById('xnxqh');
-                
-                // 清空现有选项
-                xnxqhSelect.innerHTML = '';
-                
-                // 添加当前学期
-                const currentOption = document.createElement('option');
-                currentOption.value = data.current_term;
-                currentOption.textContent = `${data.current_term} (当前学期)`;
-                xnxqhSelect.appendChild(currentOption);
-                
-                // 添加其他学期选项（前后各两个学期）
-                const [year1, year2, term] = data.current_term.split('-');
-                const baseYear = parseInt(year1);
-                
-                // 前两个学期
-                for (let i = 1; i <= 2; i++) {
-                    let prevYear1, prevYear2, prevTerm;
-                    
-                    if (term === '1') {
-                        prevYear1 = baseYear - i;
-                        prevYear2 = baseYear - i + 1;
-                        prevTerm = '2';
-                    } else {
-                        prevYear1 = baseYear;
-                        prevYear2 = baseYear + 1;
-                        prevTerm = '1';
-                    }
-                    
-                    const prevTermValue = `${prevYear1}-${prevYear2}-${prevTerm}`;
-                    const prevOption = document.createElement('option');
-                    prevOption.value = prevTermValue;
-                    prevOption.textContent = prevTermValue;
-                    xnxqhSelect.appendChild(prevOption);
-                }
-                
-                // 后两个学期
-                for (let i = 1; i <= 2; i++) {
-                    let nextYear1, nextYear2, nextTerm;
-                    
-                    if (term === '1') {
-                        nextYear1 = baseYear;
-                        nextYear2 = baseYear + 1;
-                        nextTerm = '2';
-                    } else {
-                        nextYear1 = baseYear + i;
-                        nextYear2 = baseYear + i + 1;
-                        nextTerm = '1';
-                    }
-                    
-                    const nextTermValue = `${nextYear1}-${nextYear2}-${nextTerm}`;
-                    const nextOption = document.createElement('option');
-                    nextOption.value = nextTermValue;
-                    nextOption.textContent = nextTermValue;
-                    xnxqhSelect.appendChild(nextOption);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('获取当前学期失败:', error);
-        });
 }
 
 // 检查登录状态

@@ -97,6 +97,53 @@ body {
     color: #1e88e5;
 }
 
+/* 广告/宣传区域样式 */
+#announcement-card {
+    border-left: 4px solid #ffc107;
+    transition: all 0.3s ease;
+}
+
+#announcement-card .card-header {
+    background-color: #ffc107;
+}
+
+#announcement-card.collapsed {
+    max-height: 60px;
+    overflow: hidden;
+}
+
+#announcement-card .btn-close {
+    cursor: pointer;
+}
+
+.qrcode-placeholder {
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+}
+
+#bottom-ad-card {
+    border-left: 4px solid #e9ecef;
+}
+
+#bottom-ad-card .card-header {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+#bottom-ad-card ul {
+    padding-left: 20px;
+}
+
+#bottom-ad-card a {
+    color: #1e88e5;
+    text-decoration: none;
+}
+
+#bottom-ad-card a:hover {
+    text-decoration: underline;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .row {
