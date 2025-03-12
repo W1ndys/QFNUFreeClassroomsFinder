@@ -1,0 +1,109 @@
+/* 全局样式 */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+/* 卡片样式 */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: bold;
+}
+
+/* 表单样式 */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 验证码图片样式 */
+#captcha-image {
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+/* 按钮样式 */
+.btn {
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #1e88e5;
+    border-color: #1e88e5;
+}
+
+.btn-primary:hover {
+    background-color: #1976d2;
+    border-color: #1976d2;
+}
+
+.btn-info {
+    background-color: #00acc1;
+    border-color: #00acc1;
+}
+
+.btn-info:hover {
+    background-color: #0097a7;
+    border-color: #0097a7;
+}
+
+/* 消息提示样式 */
+.alert {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* 课表结果样式 */
+.timetable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.timetable th, .timetable td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    text-align: center;
+}
+
+.timetable th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.timetable .has-class {
+    background-color: #ffebee;
+}
+
+.timetable .no-class {
+    background-color: #e8f5e9;
+}
+
+.room-title {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #1e88e5;
+    color: #1e88e5;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+    
+    .col-md-4, .col-md-8 {
+        width: 100%;
+    }
+} 
