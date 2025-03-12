@@ -46,17 +46,27 @@ function fetchBuildings() {
             if (data.status === 'success') {
                 const buildingSelect = document.getElementById('free-building');
                 
-                // 清空现有选项（保留"全部"选项）
-                const allOption = buildingSelect.querySelector('option[value=""]');
+                // 清空现有选项（保留提示选项）
+                const defaultOption = buildingSelect.querySelector('option[value=""]');
                 buildingSelect.innerHTML = '';
-                buildingSelect.appendChild(allOption);
+                buildingSelect.appendChild(defaultOption);
                 
                 // 添加教学楼选项
-                const buildings = Object.keys(data.data).sort();
+                const buildings = Object.keys(data.data).sort((a, b) => {
+                    // 将纯字母的教学楼排在前面
+                    const aIsLetter = /^[A-Za-z]+$/.test(a);
+                    const bIsLetter = /^[A-Za-z]+$/.test(b);
+                    if (aIsLetter && !bIsLetter) return -1;
+                    if (!aIsLetter && bIsLetter) return 1;
+                    return a.localeCompare(b);
+                });
+                
                 buildings.forEach(building => {
                     const option = document.createElement('option');
                     option.value = building;
-                    option.textContent = `${building}`;
+                    // 获取该教学楼的教室数量
+                    const roomCount = data.data[building].length;
+                    option.textContent = `${building}楼 (${roomCount}间)`;
                     buildingSelect.appendChild(option);
                 });
             }
@@ -326,10 +336,33 @@ function handleFreeClassroomQuery() {
     const xnxqh = document.getElementById('xnxqh').value;
     const week = document.getElementById('week').value;
     const day = document.getElementById('day').value || document.getElementById('day').options[1].value; // 如果未选择，默认为周一
-    const period = document.getElementById('free-period').value;
     const buildingPrefix = document.getElementById('free-building').value;
     
-    if (!xnxqh || !week || !day || !period) {
+    // 检查是否选择了教学楼
+    if (!buildingPrefix) {
+        showMessage('free-classroom-container', '请选择教学楼', 'warning');
+        return;
+    }
+    
+    // 获取选中的时间段
+    const selectedPeriods = [];
+    for (let i = 1; i <= 6; i++) {
+        const checkbox = document.getElementById(`period${i}`);
+        if (checkbox && checkbox.checked) {
+            selectedPeriods.push(checkbox.value);
+        }
+    }
+    
+    // 显示/隐藏警告信息
+    const periodWarning = document.getElementById('period-warning');
+    if (selectedPeriods.length === 0) {
+        periodWarning.style.display = 'block';
+        return;
+    } else {
+        periodWarning.style.display = 'none';
+    }
+    
+    if (!xnxqh || !week || !day) {
         showMessage('free-classroom-container', '请填写完整的查询信息', 'warning');
         return;
     }
@@ -361,7 +394,7 @@ function handleFreeClassroomQuery() {
             xnxqh: xnxqh,
             week: week,
             day: day,
-            period: period,
+            periods: selectedPeriods,
             building_prefix: buildingPrefix
         })
     })
@@ -377,7 +410,7 @@ function handleFreeClassroomQuery() {
     .then(data => {
         if (data.status === 'success') {
             // 渲染空闲教室结果
-            renderFreeClassrooms(data, period, day);
+            renderFreeClassrooms(data, selectedPeriods, day);
         } else {
             showMessage('free-classroom-container', '查询失败: ' + data.message, 'danger');
         }
@@ -395,7 +428,7 @@ function handleFreeClassroomQuery() {
 }
 
 // 渲染空闲教室结果
-function renderFreeClassrooms(data, period, day) {
+function renderFreeClassrooms(data, periods, day) {
     const freeClassroomContainer = document.getElementById('free-classroom-container');
     const freeClassrooms = data.free_classrooms;
     const occupiedClassrooms = data.occupied_classrooms;
@@ -411,13 +444,16 @@ function renderFreeClassrooms(data, period, day) {
     
     // 如果没有数据
     if (totalFreeCount === 0) {
-        freeClassroomContainer.innerHTML = `<div class="alert alert-info">未找到空闲教室</div>`;
+        freeClassroomContainer.innerHTML = `<div class="alert alert-info">未找到在选定时间段都空闲的教室</div>`;
         return;
     }
     
+    // 格式化时间段显示
+    const periodsText = periods.join('、');
+    
     let html = `
         <div class="alert alert-success">
-            查询成功！星期${dayName} ${period}共找到 <strong>${totalFreeCount}</strong> 个空闲教室
+            查询成功！星期${dayName}的 ${periodsText} 时间段内共找到 <strong>${totalFreeCount}</strong> 个空闲教室
         </div>
         <div class="row">
             <div class="col-12">

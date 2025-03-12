@@ -404,10 +404,10 @@ def get_free_classrooms():
         xnxqh = data.get("xnxqh")  # 学年学期
         week = data.get("week")  # 周次
         day = data.get("day")  # 星期几
-        period = data.get("period")  # 时间段
+        periods = data.get("periods", [])  # 时间段列表
         building_prefix = data.get("building_prefix", "")  # 建筑物前缀
 
-        if not all([xnxqh, week, day, period]):
+        if not all([xnxqh, week, day]) or not periods:
             return (
                 jsonify(
                     {
@@ -471,18 +471,20 @@ def get_free_classrooms():
                 if result["status"] == "success" and result["data"]:
                     room_data = result["data"][0]  # 获取第一个匹配的教室
 
-                    # 检查指定时间段是否有课
-                    has_class = False
+                    # 检查所有指定时间段是否都空闲
+                    is_free = True
                     if day in room_data["schedule"]:
                         day_schedule = room_data["schedule"][day]
-                        if period in day_schedule and day_schedule[period]:
-                            has_class = True
+                        for period in periods:
+                            if period in day_schedule and day_schedule[period]:
+                                is_free = False
+                                break
 
                     # 根据是否有课，添加到相应列表
-                    if has_class:
-                        occupied_classrooms[building].append(room)
-                    else:
+                    if is_free:
                         free_classrooms[building].append(room)
+                    else:
+                        occupied_classrooms[building].append(room)
                 else:
                     # 如果查询失败，默认为空闲
                     free_classrooms[building].append(room)
@@ -492,6 +494,7 @@ def get_free_classrooms():
                 "status": "success",
                 "free_classrooms": free_classrooms,
                 "occupied_classrooms": occupied_classrooms,
+                "queried_periods": periods,
             }
         )
 

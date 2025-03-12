@@ -219,4 +219,101 @@ body {
     .col-md-4, .col-md-8 {
         width: 100%;
     }
+}
+
+/* 时间段复选框样式 */
+.period-checkboxes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.period-item {
+    position: relative;
+}
+
+.period-checkbox {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.period-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.period-time {
+    font-weight: 500;
+    font-size: 16px;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.period-detail {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.period-checkbox:checked + .period-label {
+    background-color: #e3f2fd;
+    border-color: #1e88e5;
+}
+
+.period-checkbox:checked + .period-label .period-time {
+    color: #1e88e5;
+}
+
+.period-checkbox:checked + .period-label .period-detail {
+    color: #1976d2;
+}
+
+.period-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #80bdff;
+}
+
+#period-warning {
+    font-size: 14px;
+    padding: 8px 12px;
+    margin-top: 12px;
+    border-radius: 6px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+}
+
+/* 教学楼选择框样式 */
+#free-building {
+    padding: 10px;
+    border-radius: 6px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+#free-building:focus {
+    border-color: #1e88e5;
+    box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
+}
+
+#free-building option {
+    padding: 8px;
+}
+
+#free-building option:first-child {
+    color: #6c757d;
 } 

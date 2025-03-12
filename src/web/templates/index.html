@@ -106,21 +106,60 @@
                         <form id="free-classroom-form">
                             <div class="mb-3">
                                 <label for="free-building" class="form-label">教学楼</label>
-                                <select class="form-select" id="free-building">
-                                    <option value="">全部</option>
+                                <select class="form-select" id="free-building" required>
+                                    <option value="" disabled selected>请选择教学楼</option>
                                     <!-- 将通过JS动态填充 -->
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="free-period" class="form-label">时间段</label>
-                                <select class="form-select" id="free-period" required>
-                                    <option value="第一节">第一节 (8:00-9:40)</option>
-                                    <option value="第二节">第二节 (10:00-11:40)</option>
-                                    <option value="第三节">第三节 (14:00-15:40)</option>
-                                    <option value="第四节">第四节 (16:00-17:40)</option>
-                                    <option value="第五节">第五节 (19:00-20:40)</option>
-                                    <option value="第六节">第六节 (20:50-22:30)</option>
-                                </select>
+                                <label class="form-label">时间段（可多选）</label>
+                                <div class="period-checkboxes">
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第一节" id="period1">
+                                        <label class="period-label" for="period1">
+                                            <span class="period-time">第一节</span>
+                                            <span class="period-detail">8:00-9:40</span>
+                                        </label>
+                                    </div>
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第二节" id="period2">
+                                        <label class="period-label" for="period2">
+                                            <span class="period-time">第二节</span>
+                                            <span class="period-detail">10:00-11:40</span>
+                                        </label>
+                                    </div>
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第三节" id="period3">
+                                        <label class="period-label" for="period3">
+                                            <span class="period-time">第三节</span>
+                                            <span class="period-detail">14:00-15:40</span>
+                                        </label>
+                                    </div>
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第四节" id="period4">
+                                        <label class="period-label" for="period4">
+                                            <span class="period-time">第四节</span>
+                                            <span class="period-detail">16:00-17:40</span>
+                                        </label>
+                                    </div>
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第五节" id="period5">
+                                        <label class="period-label" for="period5">
+                                            <span class="period-time">第五节</span>
+                                            <span class="period-detail">19:00-20:40</span>
+                                        </label>
+                                    </div>
+                                    <div class="period-item">
+                                        <input class="period-checkbox" type="checkbox" value="第六节" id="period6">
+                                        <label class="period-label" for="period6">
+                                            <span class="period-time">第六节</span>
+                                            <span class="period-detail">20:50-22:30</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning mt-2" id="period-warning" style="display: none;">
+                                    请至少选择一个时间段
+                                </div>
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary" id="free-classroom-btn">查询空闲教室</button>
