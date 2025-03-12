@@ -221,77 +221,135 @@ function getDayName(day) {
 
 // 初始化广告/宣传区域
 function initAnnouncements() {
-    // 顶部公告关闭按钮
-    const closeAnnouncementBtn = document.getElementById('close-announcement');
-    if (closeAnnouncementBtn) {
-        closeAnnouncementBtn.addEventListener('click', function() {
-            const announcementCard = document.getElementById('announcement-card');
-            announcementCard.style.display = 'none';
-            
-            // 记住用户关闭了公告
-            localStorage.setItem('announcement_closed', 'true');
+    // 处理公告折叠状态
+    const announcementContent = document.getElementById('announcement-content');
+    const announcementToggle = document.querySelector('.announcement-toggle');
+
+    if (announcementContent && announcementToggle) {
+        announcementContent.addEventListener('show.bs.collapse', function () {
+            announcementToggle.style.transform = 'rotate(0deg)';
+        });
+
+        announcementContent.addEventListener('hide.bs.collapse', function () {
+            announcementToggle.style.transform = 'rotate(180deg)';
         });
     }
-    
-    // 从本地存储中检查是否已关闭过公告
-    if (localStorage.getItem('announcement_closed') === 'true') {
-        const announcementCard = document.getElementById('announcement-card');
-        if (announcementCard) {
-            announcementCard.style.display = 'none';
-        }
-    }
-    
-    // 加载广告内容
+
+    // 加载公告内容
     loadAnnouncementContent();
 }
 
-// 加载广告/宣传内容
+// 加载公告内容
 function loadAnnouncementContent() {
-    // 从服务器获取最新的广告/宣传内容
     fetch('/api/announcements')
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                // 更新顶部公告
+                // 渲染顶部公告
                 const topAnnouncement = data.data.top;
                 if (topAnnouncement) {
-                    const announcementCard = document.getElementById('announcement-card');
-                    const announcementContent = document.getElementById('announcement-content');
-                    
-                    if (announcementCard && announcementContent) {
-                        // 更新标题
-                        const headerTitle = announcementCard.querySelector('.card-header h5');
-                        if (headerTitle) {
-                            headerTitle.textContent = topAnnouncement.title;
-                        }
-                        
-                        // 更新内容
-                        announcementContent.innerHTML = topAnnouncement.content;
-                    }
+                    renderTopAnnouncement(topAnnouncement);
                 }
                 
-                // 更新底部广告
-                const bottomAd = data.data.bottom;
-                if (bottomAd) {
-                    const bottomAdCard = document.getElementById('bottom-ad-card');
-                    const bottomAdContent = document.getElementById('bottom-ad-content');
-                    
-                    if (bottomAdCard && bottomAdContent) {
-                        // 更新标题
-                        const headerTitle = bottomAdCard.querySelector('.card-header h5');
-                        if (headerTitle) {
-                            headerTitle.textContent = bottomAd.title;
-                        }
-                        
-                        // 更新内容
-                        bottomAdContent.innerHTML = bottomAd.content;
-                    }
+                // 渲染底部工具栏
+                const bottomAnnouncement = data.data.bottom;
+                if (bottomAnnouncement) {
+                    renderBottomTools(bottomAnnouncement);
                 }
             }
         })
         .catch(error => {
             console.error('获取公告内容失败:', error);
         });
+}
+
+// 渲染顶部公告
+function renderTopAnnouncement(announcement) {
+    const announcementContent = document.getElementById('announcement-content');
+    if (!announcementContent) return;
+
+    // 更新标题
+    const headerTitle = document.querySelector('#announcement-card .card-header h5');
+    if (headerTitle) {
+        headerTitle.innerHTML = `<i class="fas fa-bullhorn me-2"></i>${announcement.title}`;
+    }
+
+    // 构建公告内容
+    const content = announcement.content;
+    let html = `
+        <div class="row">
+            <div class="col-md-8">
+                <div class="announcement-text">
+                    <h5 class="welcome-title mb-4">
+                        <i class="fas fa-star me-2"></i>${content.welcome.title}
+                    </h5>
+                    <div class="announcement-info mb-3">
+                        <p class="mb-3">${content.welcome.description}</p>
+                        <ul class="feature-list">
+    `;
+
+    // 添加功能列表
+    content.features.forEach(feature => {
+        html += `
+            <li><i class="${feature.icon} me-2"></i>${feature.text}</li>
+        `;
+    });
+
+    html += `
+                        </ul>
+                    </div>
+                    <div class="qq-group-info mt-4">
+                        <p class="mb-2"><i class="fab fa-qq me-2"></i>QQ群号：</p>
+                        <div class="group-number">${content.contact.qq_group}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center d-flex align-items-center justify-content-center">
+                <div class="qrcode-container">
+                    <img src="${content.contact.qr_code}" alt="QQ群二维码" class="img-fluid qrcode-image">
+                    <p class="text-muted mt-2">扫码加入交流群</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    announcementContent.innerHTML = html;
+}
+
+// 渲染底部工具栏
+function renderBottomTools(announcement) {
+    const bottomAdContent = document.getElementById('bottom-ad-content');
+    if (!bottomAdContent) return;
+
+    // 更新标题
+    const headerTitle = document.querySelector('#bottom-ad-card .card-header h5');
+    if (headerTitle) {
+        headerTitle.innerHTML = `<i class="fas fa-thumbs-up me-2"></i>${announcement.title}`;
+    }
+
+    // 构建工具列表
+    const tools = announcement.content.tools;
+    let html = `
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex flex-wrap justify-content-around">
+    `;
+
+    tools.forEach(tool => {
+        html += `
+            <a href="${tool.url}" class="btn btn-outline-primary m-2" target="_blank">
+                <i class="${tool.icon} me-2"></i>${tool.name}
+            </a>
+        `;
+    });
+
+    html += `
+                </div>
+            </div>
+        </div>
+    `;
+
+    bottomAdContent.innerHTML = html;
 }
 
 // 绑定事件
@@ -477,7 +535,7 @@ function renderFreeClassrooms(data, periods, day) {
             html += `
                 <div class="building-section">
                     <div class="building-title">
-                        ${building}楼
+                        ${building}
                         <span class="free-classroom-highlight">空闲 ${rooms.length} 间</span>
                     </div>
                     <div class="classroom-list">
@@ -529,7 +587,7 @@ function renderFreeClassrooms(data, periods, day) {
                 html += `
                     <div class="building-section">
                         <div class="building-title">
-                            ${building}楼
+                            ${building}
                             <span class="classroom-count">有课 ${rooms.length} 间</span>
                         </div>
                         <div class="classroom-list">

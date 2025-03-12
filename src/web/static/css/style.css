@@ -165,12 +165,47 @@ body {
 
 /* 广告/宣传区域样式 */
 #announcement-card {
-    border-left: 4px solid #ffc107;
     transition: all 0.3s ease;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #announcement-card .card-header {
-    background-color: #ffc107;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    transition: background 0.3s ease;
+    padding: 12px 20px;
+}
+
+#announcement-card .card-header:hover {
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+#announcement-card .card-body {
+    background-color: #fafafa;
+    padding: 20px;
+}
+
+/* 折叠箭头动画 */
+.announcement-toggle {
+    transition: transform 0.3s ease;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.collapse:not(.show) + .card-header .announcement-toggle {
+    transform: rotate(180deg);
+}
+
+/* 公告内容动画 */
+#announcement-content {
+    transition: height 0.3s ease;
+}
+
+#announcement-content.collapsing {
+    transition: height 0.3s ease;
 }
 
 #announcement-card.collapsed {
@@ -178,36 +213,44 @@ body {
     overflow: hidden;
 }
 
-#announcement-card .btn-close {
-    cursor: pointer;
-}
-
 .qrcode-placeholder {
-    padding: 10px;
-    border-radius: 5px;
+    padding: 15px;
+    border-radius: 8px;
     background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* 底部广告样式 */
 #bottom-ad-card {
-    border-left: 4px solid #e9ecef;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 #bottom-ad-card .card-header {
-    background-color: #f8f9fa;
-    color: #495057;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
 }
 
 #bottom-ad-card ul {
     padding-left: 20px;
+    list-style-type: none;
 }
 
 #bottom-ad-card a {
-    color: #1e88e5;
+    color: #4CAF50;
     text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
 }
 
 #bottom-ad-card a:hover {
-    text-decoration: underline;
+    color: #3d8b40;
+    text-decoration: none;
+    transform: translateX(5px);
 }
 
 /* 响应式调整 */
@@ -332,4 +375,72 @@ option {
 
 option:hover {
     background-color: #f8f9fa;
+}
+
+/* 公告内容样式 */
+.announcement-text {
+    padding: 10px;
+}
+
+.welcome-title {
+    color: #2e7d32;
+    font-size: 1.25rem;
+    border-bottom: 2px solid #e8f5e9;
+    padding-bottom: 10px;
+}
+
+.announcement-info {
+    color: #37474f;
+}
+
+.feature-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.feature-list li {
+    margin-bottom: 12px;
+    padding: 8px 15px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.feature-list li:hover {
+    transform: translateX(5px);
+    background-color: #f1f8e9;
+}
+
+.feature-list i {
+    color: #4CAF50;
+}
+
+.qq-group-info {
+    background-color: #e8f5e9;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.group-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2e7d32;
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.qrcode-container {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.qrcode-image {
+    max-width: 180px;
+    border-radius: 4px;
 } 
