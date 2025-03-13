@@ -209,20 +209,134 @@ body {
 }
 
 #announcement-card .card-header {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    color: rgb(59, 42, 211);
     border: none;
-    transition: background 0.3s ease;
     padding: 12px 20px;
 }
 
-#announcement-card .card-header:hover {
-    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+#announcement-card .card-body {
+    background-color: #f8f9fa;
+    padding: 20px;
 }
 
-#announcement-card .card-body {
-    background-color: #fafafa;
-    padding: 20px;
+.announcement-text {
+    color: #37474f;
+    line-height: 1.6;
+}
+
+.welcome-message {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.contact-info {
+    background-color: #e3f2fd;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.contact-info p {
+    margin-bottom: 0;
+    color: #1976d2;
+}
+
+/* 公告列表样式 */
+.announcement-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.announcement-list li {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.announcement-list li:hover {
+    transform: translateX(5px);
+    background-color: #e3f2fd;
+}
+
+.announcement-list li i {
+    color: #1976d2;
+}
+
+/* 友情链接样式 */
+#bottom-ad-card {
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#bottom-ad-card .card-header {
+    background-color: #e60012;
+    color: #ffffff;
+    border-bottom: none;
+    padding: 12px 20px;
+}
+
+#bottom-ad-card .card-header h5 {
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+.category-title {
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.link-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.link-list li {
+    margin-bottom: 10px;
+}
+
+.link-list a {
+    color: #1976d2;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+    padding: 5px 0;
+}
+
+.link-list a:hover {
+    color: #e60012;
+    transform: translateX(5px);
+}
+
+.link-list a i {
+    width: 20px;
+    text-align: center;
+    margin-right: 8px;
+    color: #666;
+}
+
+.link-list a:hover i {
+    color: #e60012;
+}
+
+#bottom-ad-card .btn-outline-primary {
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+#bottom-ad-card .btn-outline-primary:hover {
+    background-color: #1976d2;
+    color: white;
 }
 
 /* 折叠箭头动画 */
@@ -254,39 +368,6 @@ body {
     border-radius: 8px;
     background-color: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-/* 底部广告样式 */
-#bottom-ad-card {
-    background-color: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-#bottom-ad-card .card-header {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-}
-
-#bottom-ad-card ul {
-    padding-left: 20px;
-    list-style-type: none;
-}
-
-#bottom-ad-card a {
-    color: #4CAF50;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
-}
-
-#bottom-ad-card a:hover {
-    color: #3d8b40;
-    text-decoration: none;
-    transform: translateX(5px);
 }
 
 /* 响应式调整 */
@@ -415,10 +496,6 @@ option:hover {
 }
 
 /* 公告内容样式 */
-.announcement-text {
-    padding: 10px;
-}
-
 .welcome-title {
     color: #2e7d32;
     font-size: 1.25rem;

@@ -26,23 +26,18 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card" id="announcement-card">
-                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center"
-                        role="button" data-bs-toggle="collapse" data-bs-target="#announcement-content"
-                        aria-expanded="true" aria-controls="announcement-content" style="cursor: pointer;">
+                    <div class="card-header bg-primary text-white">
                         <h5 class="mb-0">
                             <i class="fas fa-bullhorn me-2"></i>公告
                         </h5>
-                        <i class="fas fa-chevron-up announcement-toggle"></i>
                     </div>
-                    <div class="collapse show" id="announcement-content">
-                        <div class="card-body">
-                            <!-- 公告内容将通过JavaScript动态加载 -->
-                            <div class="text-center">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">正在加载公告内容...</p>
+                    <div class="card-body" id="announcement-content">
+                        <!-- 公告内容将通过JavaScript动态加载 -->
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
+                            <p class="mt-2">正在加载公告内容...</p>
                         </div>
                     </div>
                 </div>
@@ -332,16 +327,16 @@
         <div class="row mt-4 mb-4">
             <div class="col-12">
                 <div class="card" id="bottom-ad-card">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-thumbs-up me-2"></i>推荐内容</h5>
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-link me-2"></i>友情链接</h5>
                     </div>
                     <div class="card-body" id="bottom-ad-content">
-                        <!-- 底部工具栏内容将通过JavaScript动态加载 -->
+                        <!-- 友情链接内容将通过JavaScript动态加载 -->
                         <div class="text-center">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p class="mt-2">正在加载推荐内容...</p>
+                            <p class="mt-2">正在加载友情链接...</p>
                         </div>
                     </div>
                 </div>

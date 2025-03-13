@@ -2,48 +2,109 @@
     "top": {
         "title": "公告",
         "content": {
-            "welcome": {
-                "title": "欢迎加入曲阜师范大学课表查询交流群！",
-                "description": "在这里您可以与其他同学交流使用心得，获取最新功能更新，以及提出宝贵建议。"
-            },
-            "features": [
-                {
-                    "icon": "fas fa-check-circle",
-                    "text": "与其他同学交流使用心得"
-                },
-                {
-                    "icon": "fas fa-bell",
-                    "text": "获取最新功能更新通知"
-                },
-                {
-                    "icon": "fas fa-lightbulb",
-                    "text": "提出宝贵建议"
-                }
-            ],
-            "contact": {
-                "qq_group": "497554955",
-                "qr_code": "/static/images/qq_group.png"
-            }
+            "type": "html",
+            "html": "<div class='announcement-text'><div class='welcome-message mb-3'><i class='fas fa-star me-2'></i>欢迎加入曲阜师范大学课表查询交流群！</div><p>在这里您可以与其他同学交流使用心得，获取最新功能更新，以及提出宝贵建议。</p><div class='contact-info mt-3'><p class='mb-2'><i class='fab fa-qq me-2'></i>QQ群号：497554955</p></div></div>"
         }
     },
     "bottom": {
-        "title": "更多校园工具",
+        "title": "友情链接",
         "content": {
-            "tools": [
+            "type": "categories",
+            "categories": [
                 {
-                    "name": "校园导航",
-                    "url": "#",
-                    "icon": "fas fa-map-marker-alt"
+                    "name": "校园服务",
+                    "links": [
+                        {
+                            "name": "曲阜师范大学官网",
+                            "url": "https://www.qfnu.edu.cn/",
+                            "icon": "fas fa-university",
+                            "description": "曲阜师范大学官方网站"
+                        },
+                        {
+                            "name": "教务管理系统",
+                            "url": "http://zhjw.qfnu.edu.cn/",
+                            "icon": "fas fa-book",
+                            "description": "曲阜师范大学教务管理系统"
+                        },
+                        {
+                            "name": "图书馆",
+                            "url": "http://lib.qfnu.edu.cn/",
+                            "icon": "fas fa-book-reader",
+                            "description": "曲阜师范大学图书馆"
+                        }
+                    ]
                 },
                 {
-                    "name": "考试时间查询",
-                    "url": "#",
-                    "icon": "fas fa-calendar-check"
+                    "name": "实用工具",
+                    "links": [
+                        {
+                            "name": "校园导航",
+                            "url": "#",
+                            "icon": "fas fa-map-marker-alt",
+                            "description": "校园地图导航"
+                        },
+                        {
+                            "name": "考试时间查询",
+                            "url": "#",
+                            "icon": "fas fa-calendar-check",
+                            "description": "查询考试安排"
+                        },
+                        {
+                            "name": "图书馆座位预约",
+                            "url": "#",
+                            "icon": "fas fa-chair",
+                            "description": "预约图书馆座位"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "examples": {
+        "公告示例1": {
+            "type": "simple",
+            "text": "这是一个简单的公告文本，支持直接显示文字内容。"
+        },
+        "公告示例2": {
+            "type": "list",
+            "title": "系统更新公告",
+            "items": [
+                {
+                    "icon": "fas fa-check-circle",
+                    "text": "新增空闲教室查询功能"
                 },
                 {
-                    "name": "图书馆座位预约",
-                    "url": "#",
-                    "icon": "fas fa-chair"
+                    "icon": "fas fa-bug",
+                    "text": "修复了验证码识别问题"
+                },
+                {
+                    "icon": "fas fa-paint-brush",
+                    "text": "优化了界面设计"
+                }
+            ]
+        },
+        "公告示例3": {
+            "type": "contact",
+            "description": "如有任何问题或建议，欢迎联系我们！",
+            "contact_info": "<p><i class='fab fa-qq me-2'></i>QQ群：497554955</p><p><i class='fas fa-envelope me-2'></i>邮箱：example@example.com</p>"
+        },
+        "友情链接示例1": {
+            "type": "links",
+            "links": [
+                {
+                    "name": "曲阜师范大学",
+                    "url": "https://www.qfnu.edu.cn/",
+                    "icon": "fas fa-university"
+                },
+                {
+                    "name": "教务系统",
+                    "url": "http://zhjw.qfnu.edu.cn/",
+                    "icon": "fas fa-book"
+                },
+                {
+                    "name": "图书馆",
+                    "url": "http://lib.qfnu.edu.cn/",
+                    "icon": "fas fa-book-reader"
                 }
             ]
         }

@@ -517,44 +517,25 @@ def get_default_announcements():
     """获取默认的广告/宣传内容"""
     return {
         "top": {
-            "title": "公告 & 宣传",
-            "content": """
-            <div class="row">
-                <div class="col-md-8">
-                    <h5>欢迎使用曲阜师范大学教室课表查询系统！</h5>
-                    <p>本系统可以帮助您快速查询教室的课程安排，找到空闲教室进行自习或活动。</p>
-                    <p>加入我们的交流群获取更多帮助：<strong>QQ群：123456789</strong></p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <div class="qrcode-placeholder">
-                        <p>二维码区域</p>
-                        <div style="width: 150px; height: 150px; background-color: #f8f9fa; border: 1px dashed #dee2e6; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
-                            <span class="text-muted">扫码加群</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            """,
+            "title": "公告",
+            "content": {
+                "welcome": {"description": "公告描述"},
+                "contact": {"qq_group": "00000000"},
+            },
         },
         "bottom": {
             "title": "推荐内容",
-            "content": """
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>更多校园工具</h6>
-                    <ul>
-                        <li><a href="#" target="_blank">曲阜师范大学校园导航</a></li>
-                        <li><a href="#" target="_blank">考试时间查询</a></li>
-                        <li><a href="#" target="_blank">图书馆座位预约</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6>联系我们</h6>
-                    <p>有任何问题或建议，欢迎联系我们：</p>
-                    <p>邮箱：example@example.com</p>
-                </div>
-            </div>
-            """,
+            "content": {
+                "tools": [
+                    {"name": "功能1", "url": "#", "icon": "fas fa-star"},
+                    {
+                        "name": "功能2",
+                        "url": "#",
+                        "icon": "fas fa-star",
+                    },
+                    {"name": "功能3", "url": "#", "icon": "fas fa-star"},
+                ]
+            },
         },
     }
 

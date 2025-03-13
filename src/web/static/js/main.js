@@ -267,20 +267,6 @@ function getDayName(day) {
 
 // 初始化广告/宣传区域
 function initAnnouncements() {
-    // 处理公告折叠状态
-    const announcementContent = document.getElementById('announcement-content');
-    const announcementToggle = document.querySelector('.announcement-toggle');
-
-    if (announcementContent && announcementToggle) {
-        announcementContent.addEventListener('show.bs.collapse', function () {
-            announcementToggle.style.transform = 'rotate(0deg)';
-        });
-
-        announcementContent.addEventListener('hide.bs.collapse', function () {
-            announcementToggle.style.transform = 'rotate(180deg)';
-        });
-    }
-
     // 加载公告内容
     loadAnnouncementContent();
 }
@@ -294,7 +280,7 @@ function loadAnnouncementContent() {
                 // 渲染顶部公告
                 const topAnnouncement = data.data.top;
                 if (topAnnouncement) {
-                    renderTopAnnouncement(topAnnouncement);
+                    renderAnnouncement(topAnnouncement);
                 }
 
                 // 渲染底部工具栏
@@ -306,63 +292,109 @@ function loadAnnouncementContent() {
         })
         .catch(error => {
             console.error('获取公告内容失败:', error);
+            const announcementContent = document.getElementById('announcement-content');
+            if (announcementContent) {
+                announcementContent.innerHTML = '<div class="alert alert-danger">获取公告内容失败，请稍后再试。</div>';
+            }
         });
 }
 
-// 渲染顶部公告
-function renderTopAnnouncement(announcement) {
+// 渲染公告
+function renderAnnouncement(announcement) {
     const announcementContent = document.getElementById('announcement-content');
     if (!announcementContent) return;
 
-    // 更新标题
-    const headerTitle = document.querySelector('#announcement-card .card-header h5');
-    if (headerTitle) {
-        headerTitle.innerHTML = `<i class="fas fa-bullhorn me-2"></i>${announcement.title}`;
-    }
-
     // 构建公告内容
     const content = announcement.content;
-    let html = `
-        <div class="row">
-            <div class="col-md-8">
+    
+    // 如果content是字符串，直接显示HTML内容
+    if (typeof content === 'string') {
+        announcementContent.innerHTML = content;
+    } 
+    // 如果content是对象，根据类型显示不同的内容
+    else if (typeof content === 'object') {
+        // 如果有type字段，根据类型渲染
+        if (content.type) {
+            switch (content.type) {
+                case 'html':
+                    // 直接渲染HTML内容
+                    announcementContent.innerHTML = content.html || '';
+                    break;
+                case 'simple':
+                    // 简单文本内容
+                    announcementContent.innerHTML = `
+                        <div class="announcement-text">
+                            <div class="welcome-message">${content.text || ''}</div>
+                        </div>
+                    `;
+                    break;
+                case 'contact':
+                    // 联系方式内容
+                    announcementContent.innerHTML = `
+                        <div class="announcement-text">
+                            <div class="welcome-message mb-3">${content.description || ''}</div>
+                            ${content.contact_info ? `
+                            <div class="contact-info mt-3">
+                                ${content.contact_info}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    break;
+                case 'list':
+                    // 列表内容
+                    let listHtml = `
+                        <div class="announcement-text">
+                            ${content.title ? `<div class="welcome-message mb-3">${content.title}</div>` : ''}
+                            <ul class="announcement-list">
+                    `;
+                    
+                    if (content.items && Array.isArray(content.items)) {
+                        content.items.forEach(item => {
+                            listHtml += `<li>${item.icon ? `<i class="${item.icon} me-2"></i>` : ''}${item.text}</li>`;
+                        });
+                    }
+                    
+                    listHtml += `
+                            </ul>
+                        </div>
+                    `;
+                    announcementContent.innerHTML = listHtml;
+                    break;
+                default:
+                    // 默认情况，尝试显示welcome信息
+                    announcementContent.innerHTML = `
+                        <div class="announcement-text">
+                            <div class="welcome-message mb-3">
+                                ${content.welcome ? content.welcome.description : (content.description || '')}
+                            </div>
+                            ${content.contact ? `
+                            <div class="contact-info mt-3">
+                                <p class="mb-2"><i class="fab fa-qq me-2"></i>QQ群号：${content.contact.qq_group}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+            }
+        } else {
+            // 兼容旧格式
+            announcementContent.innerHTML = `
                 <div class="announcement-text">
-                    <h5 class="welcome-title mb-4">
-                        <i class="fas fa-star me-2"></i>${content.welcome.title}
-                    </h5>
-                    <div class="announcement-info mb-3">
-                        <p class="mb-3">${content.welcome.description}</p>
-                        <ul class="feature-list">
-    `;
-
-    // 添加功能列表
-    content.features.forEach(feature => {
-        html += `
-            <li><i class="${feature.icon} me-2"></i>${feature.text}</li>
-        `;
-    });
-
-    html += `
-                        </ul>
+                    <div class="welcome-message mb-3">
+                        ${content.welcome ? content.welcome.description : (content.description || '')}
                     </div>
-                    <div class="qq-group-info mt-4">
-                        <p class="mb-2"><i class="fab fa-qq me-2"></i>QQ群号：</p>
-                        <div class="group-number">${content.contact.qq_group}</div>
+                    ${content.contact ? `
+                    <div class="contact-info mt-3">
+                        <p class="mb-2"><i class="fab fa-qq me-2"></i>QQ群号：${content.contact.qq_group}</p>
                     </div>
+                    ` : ''}
                 </div>
-            </div>
-            <div class="col-md-4 text-center d-flex align-items-center justify-content-center">
-                <div class="qrcode-container">
-                    <img src="${content.contact.qr_code}" alt="QQ群二维码" class="img-fluid qrcode-image">
-                    <p class="text-muted mt-2">扫码加入交流群</p>
-                </div>
-            </div>
-        </div>
-    `;
-
-    announcementContent.innerHTML = html;
+            `;
+        }
+    }
 }
 
-// 渲染底部工具栏
+// 渲染底部友情链接
 function renderBottomTools(announcement) {
     const bottomAdContent = document.getElementById('bottom-ad-content');
     if (!bottomAdContent) return;
@@ -370,11 +402,100 @@ function renderBottomTools(announcement) {
     // 更新标题
     const headerTitle = document.querySelector('#bottom-ad-card .card-header h5');
     if (headerTitle) {
-        headerTitle.innerHTML = `<i class="fas fa-thumbs-up me-2"></i>${announcement.title}`;
+        headerTitle.innerHTML = `<i class="fas fa-link me-2"></i>${announcement.title || '友情链接'}`;
     }
 
-    // 构建工具列表
-    const tools = announcement.content.tools;
+    // 构建友情链接内容
+    const content = announcement.content;
+    
+    // 如果content是字符串，直接显示HTML内容
+    if (typeof content === 'string') {
+        bottomAdContent.innerHTML = content;
+    } 
+    // 如果content是对象，根据类型显示不同的内容
+    else if (typeof content === 'object') {
+        // 如果有type字段，根据类型渲染
+        if (content.type) {
+            switch (content.type) {
+                case 'html':
+                    // 直接渲染HTML内容
+                    bottomAdContent.innerHTML = content.html || '';
+                    break;
+                case 'links':
+                    // 友情链接列表
+                    let linksHtml = `<div class="row"><div class="col-12"><div class="d-flex flex-wrap justify-content-around">`;
+                    
+                    if (content.links && Array.isArray(content.links)) {
+                        content.links.forEach(link => {
+                            linksHtml += `
+                                <a href="${link.url || '#'}" class="btn btn-outline-primary m-2" target="_blank" title="${link.description || ''}">
+                                    ${link.icon ? `<i class="${link.icon} me-2"></i>` : ''}${link.name || '链接'}
+                                </a>
+                            `;
+                        });
+                    }
+                    
+                    linksHtml += `</div></div></div>`;
+                    bottomAdContent.innerHTML = linksHtml;
+                    break;
+                case 'categories':
+                    // 分类友情链接
+                    let categoriesHtml = `<div class="row">`;
+                    
+                    if (content.categories && Array.isArray(content.categories)) {
+                        content.categories.forEach(category => {
+                            categoriesHtml += `
+                                <div class="col-md-${12 / content.categories.length}">
+                                    <h6 class="category-title">${category.name || '分类'}</h6>
+                                    <ul class="link-list">
+                            `;
+                            
+                            if (category.links && Array.isArray(category.links)) {
+                                category.links.forEach(link => {
+                                    categoriesHtml += `
+                                        <li>
+                                            <a href="${link.url || '#'}" target="_blank" title="${link.description || ''}">
+                                                ${link.icon ? `<i class="${link.icon} me-2"></i>` : ''}${link.name || '链接'}
+                                            </a>
+                                        </li>
+                                    `;
+                                });
+                            }
+                            
+                            categoriesHtml += `
+                                    </ul>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    categoriesHtml += `</div>`;
+                    bottomAdContent.innerHTML = categoriesHtml;
+                    break;
+                default:
+                    // 默认情况，尝试显示工具列表（兼容旧格式）
+                    renderLegacyTools(content);
+            }
+        } else if (content.tools) {
+            // 兼容旧格式
+            renderLegacyTools(content);
+        } else {
+            bottomAdContent.innerHTML = '<div class="alert alert-info">没有可用的友情链接</div>';
+        }
+    }
+}
+
+// 渲染旧格式的工具列表（兼容性函数）
+function renderLegacyTools(content) {
+    const bottomAdContent = document.getElementById('bottom-ad-content');
+    if (!bottomAdContent) return;
+    
+    const tools = content.tools;
+    if (!tools || !Array.isArray(tools)) {
+        bottomAdContent.innerHTML = '<div class="alert alert-info">没有可用的友情链接</div>';
+        return;
+    }
+    
     let html = `
         <div class="row">
             <div class="col-12">
