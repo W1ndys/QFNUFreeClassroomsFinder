@@ -231,7 +231,7 @@ def query_classtable():
 
         # 查询课表
         result = get_room_classtable(xnxqh, room_name, week, day, jc1, jc2)
-
+        logger.info(f"查询课表结果: {result}")
         return jsonify(result)
 
     except Exception as e:

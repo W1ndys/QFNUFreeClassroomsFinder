@@ -272,6 +272,6 @@ if __name__ == "__main__":
     week = 4
     day = 4
     jc1 = "01"
-    jc2 = "02"
+    jc2 = "04"
     classtable = get_room_classtable(xnxqh, room_name, week, day, jc1, jc2)
     logger.info(f"课表: {classtable}")

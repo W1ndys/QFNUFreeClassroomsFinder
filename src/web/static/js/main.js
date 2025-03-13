@@ -211,6 +211,10 @@ function fetchCurrentWeekDay(term) {
                     // 同时更新空闲教室查询的周次选择框
                     if (freeWeekSelect) {
                         const freeOption = option.cloneNode(true);
+                        // 确保空闲教室查询的周次选择框也默认选中当前周次
+                        if (i === data.current_week) {
+                            freeOption.selected = true;
+                        }
                         freeWeekSelect.appendChild(freeOption);
                     }
                 }
@@ -836,9 +840,17 @@ async function handleQuery() {
     const room_name = document.getElementById('room_name').value;
     const week = document.getElementById('week').value;
     const day = document.getElementById('day').value;
+    const jc1 = document.getElementById('jc1').value;
+    const jc2 = document.getElementById('jc2').value;
 
     if (!xnxqh || !room_name || !week) {
         showMessage('result-container', '请填写完整的查询信息', 'warning');
+        return;
+    }
+
+    // 检查节次选择是否合理
+    if (parseInt(jc1) > parseInt(jc2)) {
+        showMessage('result-container', '开始节次不能大于结束节次', 'warning');
         return;
     }
 
@@ -876,7 +888,9 @@ async function handleQuery() {
                 xnxqh,
                 room_name,
                 week,
-                day
+                day,
+                jc1,
+                jc2
             })
         });
 
@@ -890,7 +904,9 @@ async function handleQuery() {
         const result = await response.json();
 
         if (result.status === 'success') {
-            renderClassTable(result.data, room_name, week, day);
+            console.log(result.data);
+            // 传递节次范围信息，但不强制过滤
+            renderClassTable(result.data, room_name, week, day, jc1, jc2);
         } else {
             showMessage('result-container', '查询失败: ' + result.message, 'danger');
         }
@@ -906,7 +922,7 @@ async function handleQuery() {
 }
 
 // 渲染课表
-function renderClassTable(data, roomName, week, day) {
+function renderClassTable(data, roomName, week, day, jc1, jc2) {
     const resultContainer = document.getElementById('result-container');
     const roomsData = data;
 
@@ -922,19 +938,30 @@ function renderClassTable(data, roomName, week, day) {
     // 获取星期几的名称
     const dayName = day ? getDayName(day) : '';
 
-    let html = `<div class="alert alert-success">查询成功！找到 ${roomsData.length} 个匹配的教室</div>`;
+    // 构建查询信息显示
+    let queryInfo = `查询成功！找到 ${roomsData.length} 个匹配的教室`;
+    if (jc1 && jc2) {
+        queryInfo += `，节次范围：第${jc1}节至第${jc2}节`;
+    }
+
+    let html = `<div class="alert alert-success">${queryInfo}</div>`;
 
     // 遍历每个匹配的教室
     roomsData.forEach(room => {
         // 添加教室标题
-        html += `<h4 class="room-title"><i class="fas fa-door-open me-2"></i>${room.name}</h4>`;
+        if (day) {
+            const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            html += `<h4 class="room-title"><i class="fas fa-door-open me-2"></i>${room.name} - ${dayNames[parseInt(day)]}</h4>`;
+        } else {
+            html += `<h4 class="room-title"><i class="fas fa-door-open me-2"></i>${room.name}</h4>`;
+        }
 
         // 如果指定了星期几，只显示该天的课表
         if (day) {
-            html += createDayTable(room, day);
+            html += createDayTable(room, day, jc1, jc2);
         } else {
             // 否则显示整周课表
-            html += createWeekTable(room);
+            html += createWeekTable(room, jc1, jc2);
         }
     });
 
@@ -942,41 +969,157 @@ function renderClassTable(data, roomName, week, day) {
 }
 
 // 创建单日课表
-function createDayTable(room, day) {
+function createDayTable(room, day, jc1, jc2) {
     const daySchedule = room.schedule[day];
     if (!daySchedule) {
         return `<div class="alert alert-info">该教室在选定的日期没有课程安排</div>`;
     }
 
-    const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-
     let html = `<table class="timetable">
-        <thead>
-            <tr>
-                <th>${dayNames[parseInt(day)]}</th>
-                <th>课程信息</th>
-            </tr>
-        </thead>
         <tbody>`;
 
-    // 遍历时间段
-    const periods = Object.keys(daySchedule).sort();
-    for (const period of periods) {
+    // 获取所有节次，并按照数字顺序排序
+    const allPeriods = Object.keys(daySchedule).sort((a, b) => {
+        // 如果是数字格式的节次（如"0102"），按数字排序
+        if (!isNaN(a) && !isNaN(b)) {
+            return parseInt(a) - parseInt(b);
+        }
+        // 如果是"第X节"格式，提取数字部分排序
+        const numA = a.match(/第(\d+)节/);
+        const numB = b.match(/第(\d+)节/);
+        if (numA && numB) {
+            return parseInt(numA[1]) - parseInt(numB[1]);
+        }
+        // 其他情况按字符串排序
+        return a.localeCompare(b);
+    });
+
+    // 过滤掉重复的节次（例如，如果有"第1节"和"0102"，只显示"0102"）
+    const displayedPeriods = [];
+    const displayedClasses = new Set(); // 用于跟踪已显示的课程
+
+    // 首先添加数字格式的节次（如"0102"）
+    allPeriods.forEach(period => {
+        if (!isNaN(period) && period.length === 4) {
+            displayedPeriods.push(period);
+        }
+    });
+
+    // 然后添加未被覆盖的单节次
+    allPeriods.forEach(period => {
+        const match = period.match(/第(\d+)节/);
+        if (match) {
+            const periodNum = parseInt(match[1]);
+            // 检查这个单节次是否已经被某个区间覆盖
+            let covered = false;
+            for (const displayedPeriod of displayedPeriods) {
+                if (!isNaN(displayedPeriod) && displayedPeriod.length === 4) {
+                    const start = parseInt(displayedPeriod.substring(0, 2));
+                    const end = parseInt(displayedPeriod.substring(2, 4));
+                    if (periodNum >= start && periodNum <= end) {
+                        covered = true;
+                        break;
+                    }
+                }
+            }
+            if (!covered) {
+                displayedPeriods.push(period);
+            }
+        }
+    });
+
+    // 遍历排序后的节次
+    for (const period of displayedPeriods) {
         const classes = daySchedule[period];
+        
+        // 检查是否在用户选择的节次范围内
+        let isInSelectedRange = false;
+        if (jc1 && jc2) {
+            if (!isNaN(period) && period.length === 4) {
+                // 对于区间节次（如"0102"），检查是否与用户选择的范围有重叠
+                const start = parseInt(period.substring(0, 2));
+                const end = parseInt(period.substring(2, 4));
+                isInSelectedRange = !(end < parseInt(jc1) || start > parseInt(jc2));
+            } else {
+                // 对于单节次（如"第1节"），检查是否在用户选择的范围内
+                const match = period.match(/第(\d+)节/);
+                if (match) {
+                    const periodNum = parseInt(match[1]);
+                    isInSelectedRange = periodNum >= parseInt(jc1) && periodNum <= parseInt(jc2);
+                }
+            }
+        }
+        
         if (classes && classes.length > 0) {
-            const classInfo = classes[0];
-            html += `<tr class="has-class">
-                <td>${period}</td>
-                <td>
-                    <div><strong>${classInfo.course_name || '未知课程'}</strong></div>
-                    ${classInfo.teacher ? `<div>教师: ${classInfo.teacher}</div>` : ''}
-                    ${classInfo.weeks ? `<div>周次: ${classInfo.weeks}</div>` : ''}
-                    ${classInfo.class ? `<div>班级: ${classInfo.class}</div>` : ''}
-                </td>
+            // 过滤掉已经显示过的课程
+            const newClasses = classes.filter(classInfo => {
+                const key = classInfo.original_text || classInfo.course_name;
+                if (displayedClasses.has(key)) {
+                    return false;
+                }
+                displayedClasses.add(key);
+                return true;
+            });
+
+            if (newClasses.length === 0) continue;
+
+            const classInfo = newClasses[0];
+            
+            // 格式化节次显示
+            let displayPeriod = period;
+            if (!isNaN(period) && period.length === 4) {
+                const start = parseInt(period.substring(0, 2));
+                const end = parseInt(period.substring(2, 4));
+                displayPeriod = `第${start}-${end}节`;
+            }
+            
+            // 添加高亮类，如果在用户选择的节次范围内
+            const highlightClass = isInSelectedRange ? ' highlighted-period' : '';
+            
+            html += `<tr class="has-class${highlightClass}">
+                <td>`;
+            
+            // 如果有原始文本，直接显示
+            if (classInfo.original_text) {
+                const lines = classInfo.original_text.split('\n').filter(line => line.trim());
+                lines.forEach(line => {
+                    html += `<div>${line}</div>`;
+                });
+            } 
+            // 否则显示解析后的信息
+            else if (classInfo.all_lines && classInfo.all_lines.length > 0) {
+                classInfo.all_lines.forEach(line => {
+                    html += `<div>${line}</div>`;
+                });
+            }
+            // 兼容旧格式
+            else {
+                html += `<div><strong>${classInfo.course_name || '未知课程'}</strong></div>`;
+                if (classInfo.room) {
+                    html += `<div>教室: ${classInfo.room}</div>`;
+                }
+                if (classInfo.class_info && classInfo.class_info.length > 0) {
+                    classInfo.class_info.forEach(info => {
+                        html += `<div>${info}</div>`;
+                    });
+                }
+            }
+            
+            html += `</td>
             </tr>`;
         } else {
-            html += `<tr class="no-class">
-                <td>${period}</td>
+            // 格式化节次显示
+            let displayPeriod = period;
+            if (!isNaN(period) && period.length === 4) {
+                const start = parseInt(period.substring(0, 2));
+                const end = parseInt(period.substring(2, 4));
+                displayPeriod = `第${start}-${end}节`;
+            }
+            
+            // 添加高亮类，如果在用户选择的节次范围内
+            const highlightClass = isInSelectedRange ? ' highlighted-period' : '';
+            
+            html += `<tr class="no-class${highlightClass}">
                 <td>空闲</td>
             </tr>`;
         }
@@ -987,42 +1130,79 @@ function createDayTable(room, day) {
 }
 
 // 创建整周课表
-function createWeekTable(room) {
-    const dayNames = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+function createWeekTable(room, jc1, jc2) {
     const periodNames = ['第一节', '第二节', '第三节', '第四节', '第五节', '第六节', '第七节', '第八节', '第九节', '第十节', '第十一节', '第十二节', '第十三节'];
 
     let html = `<table class="timetable">
-        <thead>
-            <tr>
-                <th>时间/日期</th>`;
-
-    // 添加表头（周一至周日）
-    for (let i = 1; i <= 7; i++) {
-        html += `<th>${dayNames[i]}</th>`;
-    }
-
-    html += `</tr>
-        </thead>
         <tbody>`;
 
     // 遍历每个时间段
     for (let period = 0; period < periodNames.length; period++) {
-        html += `<tr>
-            <td>${periodNames[period]}</td>`;
+        const periodName = periodNames[period];
+        const periodNum = period + 1;
+        const periodKey = `第${periodNum}节`;
+        
+        // 检查是否在用户选择的节次范围内
+        const isInSelectedRange = jc1 && jc2 && 
+            periodNum >= parseInt(jc1) && periodNum <= parseInt(jc2);
+        
+        // 添加高亮类，如果在用户选择的节次范围内
+        const rowHighlightClass = isInSelectedRange ? ' highlighted-period' : '';
+        
+        html += `<tr class="${rowHighlightClass}">`;
 
         // 遍历每天
         for (let day = 1; day <= 7; day++) {
             const daySchedule = room.schedule[day.toString()];
-            const periodKey = Object.keys(daySchedule || {}).sort()[period];
-
-            if (daySchedule && periodKey && daySchedule[periodKey] && daySchedule[periodKey].length > 0) {
+            
+            if (daySchedule && daySchedule[periodKey] && daySchedule[periodKey].length > 0) {
+                // 找到包含当前节次的课程
                 const classInfo = daySchedule[periodKey][0];
-                html += `<td class="has-class">
-                    <div><strong>${classInfo.course_name || '未知课程'}</strong></div>
-                    ${classInfo.teacher ? `<div>${classInfo.teacher}</div>` : ''}
-                </td>`;
+                
+                // 检查是否已经在前面的节次中显示过这个课程
+                let alreadyDisplayed = false;
+                if (classInfo.period && classInfo.period.length === 4) {
+                    const startPeriod = parseInt(classInfo.period.substring(0, 2));
+                    if (startPeriod < periodNum) {
+                        alreadyDisplayed = true;
+                    }
+                }
+                
+                if (!alreadyDisplayed) {
+                    // 添加高亮类，如果在用户选择的节次范围内
+                    const cellClass = isInSelectedRange ? 'has-class highlighted-period' : 'has-class';
+                    
+                    html += `<td class="${cellClass}">`;
+                    
+                    // 如果有原始文本，显示第一行（课程名称）
+                    if (classInfo.original_text) {
+                        const lines = classInfo.original_text.split('\n').filter(line => line.trim());
+                        if (lines.length > 0) {
+                            html += `<div><strong>${lines[0]}</strong></div>`;
+                        }
+                        // 如果有更多行，添加一个提示
+                        if (lines.length > 1) {
+                            html += `<div class="small text-muted">查看详情</div>`;
+                        }
+                    } 
+                    // 否则显示解析后的课程名称
+                    else {
+                        html += `<div><strong>${classInfo.course_name || '未知课程'}</strong></div>`;
+                    }
+                    
+                    html += `</td>`;
+                } else {
+                    // 如果已经显示过，显示一个占位符
+                    // 添加高亮类，如果在用户选择的节次范围内
+                    const cellClass = isInSelectedRange ? 'has-class continued highlighted-period' : 'has-class continued';
+                    
+                    html += `<td class="${cellClass}"></td>`;
+                }
             } else {
-                html += `<td class="no-class">空闲</td>`;
+                // 添加高亮类，如果在用户选择的节次范围内
+                const cellClass = isInSelectedRange ? 'no-class highlighted-period' : 'no-class';
+                
+                html += `<td class="${cellClass}">空闲</td>`;
             }
         }
 

@@ -28,10 +28,6 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
         logging.info(
             f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}"
         )
-        # 添加响应文本日志，便于调试
-        logging.debug(
-            f"全校性教室课表查询页面响应状态码: {classroom_response.status_code}"
-        )
 
         # 如果访问课表查询页面失败，记录错误
         if classroom_response.status_code != 200:
@@ -43,8 +39,6 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
         init_url = f"http://zhjw.qfnu.edu.cn/jsxsd/kbxx/initJc?xnxq={xnxqh}&kbjcmsid={kbjcmsid}"
         init_response = session.get(init_url)
         logging.info(f"预加载框架响应状态码: {init_response.status_code}")
-        # 添加响应文本日志，便于调试
-        logging.debug(f"预加载框架响应状态码: {init_response.status_code}")
 
         # 如果预加载失败，记录错误
         if init_response.status_code != 200:
@@ -67,16 +61,19 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
             "zc2": str(week),
             "skxq1": str(day) if day else "",
             "skxq2": str(day) if day else "",
-            "jc1": jc1,
-            "jc2": jc2,
+            "jc1": jc1 if jc1 else "",  # 确保传递节次参数
+            "jc2": jc2 if jc2 else "",  # 确保传递节次参数
         }
+
+        # 记录请求参数，便于调试
+        logging.info(f"课表查询请求参数: {data}")
 
         # 发送POST请求
         response = session.post(url, data=data)
         response.raise_for_status()
 
         # 添加响应文本日志，便于调试
-        logging.debug(f"课表查询响应状态码: {response.status_code}")
+        logging.info(f"课表查询响应状态码: {response.status_code}")
 
         # 解析返回的HTML
         soup = BeautifulSoup(response.text, "html.parser")
@@ -86,14 +83,17 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
         if not table:
             logging.error("未找到课表数据")
             return {"error": "未找到课表数据"}
+
         # 解析表格数据
-        result = parse_classtable_new(table, day, room_name)
+        result = parse_classtable_new(table, day, room_name, jc1, jc2)
 
         return {
             "status": "success",
             "room": room_name,
             "week": week,
             "day": day,
+            "jc1": jc1,
+            "jc2": jc2,
             "data": result,
         }
 
@@ -105,113 +105,181 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
         return {"error": f"处理数据失败: {str(e)}"}
 
 
-def parse_classtable_new(table, specific_day=None, room_name=None):
+def parse_classtable_new(table, specific_day=None, room_name=None, jc1=None, jc2=None):
     """
-    解析课表HTML表格 - 适应新的HTML结构
+    解析课表HTML表格 - 新算法
 
     参数:
         table: BeautifulSoup表格对象
         specific_day: 指定的星期几，如果提供则只返回该天的课表
         room_name: 教室名称前缀，如果提供则返回所有匹配前缀的教室课表
+        jc1: 开始节次，如果提供则只返回该节次及之后的课表
+        jc2: 结束节次，如果提供则只返回该节次及之前的课表
 
     返回:
         list: 解析后的课表数据，按教室组织
     """
     rooms_data = []
 
-    # 记录日志，帮助调试
-    logging.debug(f"开始解析课表，specific_day={specific_day}, room_name={room_name}")
+    logging.info(
+        f"开始解析课表，specific_day={specific_day}, room_name={room_name}, jc1={jc1}, jc2={jc2}"
+    )
 
     try:
-        # 获取表头信息
-        headers_row = table.find("thead").find_all("tr")[1]  # 第二行包含节次信息
-        periods = []
+        # 获取表头信息 - 节次
+        if not table.find("thead"):
+            logging.error("表格结构异常，未找到thead")
+            return rooms_data
 
-        # 跳过第一列（教室\节次）
-        for td in headers_row.find_all("td")[1:]:
+        header_rows = table.find("thead").find_all("tr")
+        if len(header_rows) < 2:
+            logging.error("表格头部结构异常，行数不足")
+            return rooms_data
+
+        # 获取星期信息（第一行）
+        week_headers = []
+        for th in header_rows[0].find_all(["th", "td"])[1:]:  # 跳过第一个单元格
+            if "colspan" in th.attrs:
+                week_name = th.text.strip()
+                colspan = int(th.attrs.get("colspan", 1))
+                for _ in range(colspan):
+                    week_headers.append(week_name)
+            else:
+                week_headers.append(th.text.strip())
+
+        # 获取节次信息（第二行）
+        period_cells = header_rows[1].find_all("td")
+        if len(period_cells) < 2:  # 至少需要有"教室\节次"和一个节次
+            logging.error("节次信息异常")
+            return rooms_data
+
+        periods = []
+        for td in period_cells[1:]:  # 跳过第一个单元格
             periods.append(td.text.strip())
 
-        logging.debug(f"解析到的节次: {periods}")
+        logging.info(f"解析到的节次: {periods}")
 
-        # 获取每个教室的数据
-        rows = table.find_all("tr")[2:]  # 跳过表头两行
-        logging.debug(f"找到 {len(rows)} 行教室数据")
+        # 计算每天有多少个节次列
+        periods_per_day = len(periods) // 7  # 假设一周7天
+        if periods_per_day * 7 != len(periods):
+            logging.warning(f"节次列数({len(periods)})不是7的整数倍，可能导致解析错误")
 
-        for row in rows:
+        # 解析每个教室行
+        room_rows = table.find_all("tr")[2:]  # 跳过表头两行
+        logging.info(f"找到 {len(room_rows)} 行教室数据")
+
+        for row in room_rows:
             cells = row.find_all("td")
             if not cells or len(cells) <= 1:
                 continue
 
             # 获取教室名
             current_room_name = cells[0].text.strip()
-            logging.debug(f"处理教室: {current_room_name}")
+            logging.info(f"处理教室: {current_room_name}")
 
-            # 如果指定了教室名前缀，且当前教室名不是以该前缀开头，则跳过
+            # 检查是否匹配前缀
             if room_name and not current_room_name.startswith(room_name):
-                logging.debug(f"教室 {current_room_name} 不匹配前缀 {room_name}，跳过")
+                logging.info(f"教室 {current_room_name} 不匹配前缀 {room_name}，跳过")
                 continue
 
             room_schedule = {}
             has_classes = False  # 标记该教室是否有课
 
-            # 处理每一天的数据
-            for day_num in range(1, 8):  # 1-7对应周一到周日
-                # 如果指定了特定的天，且不是当前处理的天，则跳过
-                if specific_day and int(specific_day) != day_num:
+            # 遍历每一列（跳过第一列教室名）
+            for i, cell in enumerate(cells[1:], 1):
+                # 计算当前单元格对应的星期和节次
+                day_index = (i - 1) // periods_per_day + 1  # 从1开始，对应周一到周日
+                period_index = (i - 1) % periods_per_day
+
+                # 如果指定了特定的星期，且不是当前处理的星期，则跳过
+                if specific_day and int(specific_day) != day_index:
                     continue
 
-                day_schedule = {}
+                # 获取当前节次
+                if period_index < len(periods):
+                    period = periods[period_index]
 
-                # 计算当天的起始列索引 - 每天只有一列
-                col_idx = day_num  # 索引从1开始，第1列是教室名，第2-8列是周一到周日
+                    # 检查节次是否在指定范围内
+                    # 注：这里只对标准格式的节次进行过滤，如"0102"表示第1-2节
+                    if (jc1 or jc2) and len(period) == 4 and period.isdigit():
+                        current_start = int(period[:2])
+                        current_end = int(period[2:])
 
-                if col_idx < len(cells):
-                    cell = cells[col_idx]
-                    period = periods[col_idx - 1]  # 获取对应的时间段
+                        if jc1 and current_end < int(jc1):
+                            continue  # 当前节次结束早于指定的开始节次
+                        if jc2 and current_start > int(jc2):
+                            continue  # 当前节次开始晚于指定的结束节次
 
-                    # 获取课程内容
-                    course_divs = cell.find_all("div", class_="kbcontent1")
+                # 检查单元格是否有课程内容
+                course_divs = cell.find_all("div", class_="kbcontent1")
 
-                    if course_divs:
-                        has_day_classes = False
-                        for course_div in course_divs:
-                            course_text = course_div.text.strip()
-                            if course_text and course_text != "&nbsp;":
-                                class_data = parse_class_info_new(course_text)
-                                if class_data:
-                                    if period not in day_schedule:
-                                        day_schedule[period] = []
-                                    day_schedule[period].append(class_data)
-                                    has_classes = True
-                                    has_day_classes = True
+                if course_divs:
+                    for course_div in course_divs:
+                        course_text = course_div.text.strip()
+                        if course_text and course_text != "&nbsp;":
+                            # 解析课程信息
+                            class_data = parse_class_info_new(course_text)
+                            if class_data:
+                                # 保存原始文本
+                                class_data["original_text"] = course_text
+                                # 保存节次信息
+                                class_data["period"] = period
 
-                        # 只有当这一天有课时，才添加到结果中
-                        if has_day_classes:
-                            if str(day_num) not in room_schedule:
-                                room_schedule[str(day_num)] = {}
-                            room_schedule[str(day_num)].update(day_schedule)
+                                # 添加课程信息到课表
+                                day_key = str(day_index)
+                                if day_key not in room_schedule:
+                                    room_schedule[day_key] = {}
+
+                                if period not in room_schedule[day_key]:
+                                    room_schedule[day_key][period] = []
+
+                                room_schedule[day_key][period].append(class_data)
+
+                                # 同时为单节次创建映射（例如"0102"表示第1-2节，分别创建"第1节"和"第2节"的映射）
+                                if len(period) == 4 and period.isdigit():
+                                    start_period = int(period[:2])
+                                    end_period = int(period[2:])
+                                    for p in range(start_period, end_period + 1):
+                                        single_period = f"第{p}节"
+                                        if single_period not in room_schedule[day_key]:
+                                            room_schedule[day_key][single_period] = []
+                                        room_schedule[day_key][single_period].append(
+                                            class_data
+                                        )
+
+                                has_classes = True
+                                logging.info(
+                                    f"教室 {current_room_name} 在星期{day_index}的{period}有课: {course_text[:20]}..."
+                                )
 
             # 只有当教室有课时，才添加到结果中
             if has_classes:
                 rooms_data.append(
                     {"name": current_room_name, "schedule": room_schedule}
                 )
-                logging.debug(f"教室 {current_room_name} 有课，添加到结果")
+                logging.info(f"教室 {current_room_name} 有课，添加到结果")
             else:
-                logging.debug(f"教室 {current_room_name} 没有课，不添加到结果")
+                logging.info(f"教室 {current_room_name} 没有课，不添加到结果")
 
     except Exception as e:
         logging.error(f"解析课表时出错: {str(e)}")
+        import traceback
+
+        logging.error(traceback.format_exc())
 
     return rooms_data
 
 
 def parse_class_info_new(info_text):
     """
-    解析课程信息文本 - 适应新的格式
+    解析课程信息文本 - 新算法
 
     参数:
-        info_text: 课程信息文本
+        info_text: 课程信息文本，例如：
+        "通信电子电路张明强
+        (1-18周)
+        23通信班
+        格物楼B203"
 
     返回:
         dict: 解析后的课程信息
@@ -219,45 +287,54 @@ def parse_class_info_new(info_text):
     if not info_text or info_text.strip() == "" or info_text.strip() == "&nbsp;":
         return None
 
+    # 分割文本为行
     lines = [line.strip() for line in info_text.split("\n") if line.strip()]
     if not lines:
         return None
 
-    class_info = {}
+    class_info = {"all_lines": lines}  # 保存所有行，便于前端展示
 
-    # 第一行通常是课程名称和教师
-    if len(lines) > 0:
+    # 解析第一行（通常是课程名称和教师名）
+    if lines:
+        # 尝试从第一行提取课程名和教师名
         first_line = lines[0]
-        if "(" in first_line and ")" in first_line:
-            # 尝试分离课程名称和教师
-            parts = first_line.split("(")[0].strip().split()
-            if len(parts) > 1:
-                class_info["course_name"] = "".join(parts[:-1])
-                class_info["teacher"] = parts[-1]
-            else:
-                class_info["course_name"] = first_line
+        # 常见模式：课程名+教师名
+        course_teacher_match = None
+        for i in range(len(first_line) - 1, 0, -1):
+            if first_line[i].isalpha():  # 找到最后一个汉字位置
+                course_teacher_match = (first_line[: i + 1], "")
+                break
+
+        if course_teacher_match:
+            class_info["course_name"] = course_teacher_match[0]
+            class_info["teacher"] = (
+                course_teacher_match[1] if course_teacher_match[1] else []
+            )
         else:
             class_info["course_name"] = first_line
 
-    # 解析周次信息
-    for line in lines:
-        if "(" in line and ")" in line and "周" in line:
-            weeks_part = line.split("(")[1].split(")")[0]
-            class_info["weeks"] = weeks_part
-            break
-
-    # 解析班级信息
-    for i, line in enumerate(lines):
-        if i > 0 and not ("(" in line and ")" in line and "周" in line):
-            if "楼" not in line:  # 不是教室信息
-                class_info["class"] = line
+    # 解析周次信息（通常在第二行，格式如"(1-18周)"）
+    if len(lines) > 1:
+        for i, line in enumerate(lines):
+            if "周)" in line and "(" in line:
+                week_range = line.strip()
+                class_info["week_range"] = week_range
                 break
 
-    # 解析教室信息
-    for line in lines:
-        if "楼" in line:
-            class_info["room"] = line
-            break
+    # 解析最后一行（通常是教室信息）
+    if len(lines) > 1:
+        class_info["room"] = lines[-1]
+
+    # 解析中间行（通常是班级信息）
+    if len(lines) > 2:
+        # 排除第一行（课程名和教师）和最后一行（教室）
+        middle_lines = lines[1:-1]
+        # 排除周次信息
+        class_lines = [
+            line for line in middle_lines if not ("周)" in line and "(" in line)
+        ]
+        if class_lines:
+            class_info["class_info"] = class_lines
 
     return class_info
 

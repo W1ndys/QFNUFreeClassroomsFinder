@@ -20,7 +20,8 @@ body {
 }
 
 /* 表单样式 */
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
@@ -70,7 +71,8 @@ body {
     margin-top: 15px;
 }
 
-.timetable th, .timetable td {
+.timetable th,
+.timetable td {
     border: 1px solid #dee2e6;
     padding: 8px;
     text-align: center;
@@ -85,9 +87,16 @@ body {
     background-color: #ffebee;
 }
 
+.timetable .has-class.continued {
+    background-color: #ffcdd2;
+    border-top: 1px dashed #e57373;
+}
+
 .timetable .no-class {
     background-color: #e8f5e9;
 }
+
+
 
 .room-title {
     margin-top: 20px;
@@ -195,7 +204,7 @@ body {
     color: rgba(255, 255, 255, 0.9);
 }
 
-.collapse:not(.show) + .card-header .announcement-toggle {
+.collapse:not(.show)+.card-header .announcement-toggle {
     transform: rotate(180deg);
 }
 
@@ -258,8 +267,9 @@ body {
     .row {
         flex-direction: column;
     }
-    
-    .col-md-4, .col-md-8 {
+
+    .col-md-4,
+    .col-md-8 {
         width: 100%;
     }
 }
@@ -311,16 +321,16 @@ body {
     color: #6c757d;
 }
 
-.period-checkbox:checked + .period-label {
+.period-checkbox:checked+.period-label {
     background-color: #e3f2fd;
     border-color: #1e88e5;
 }
 
-.period-checkbox:checked + .period-label .period-time {
+.period-checkbox:checked+.period-label .period-time {
     color: #1e88e5;
 }
 
-.period-checkbox:checked + .period-label .period-detail {
+.period-checkbox:checked+.period-label .period-detail {
     color: #1976d2;
 }
 
@@ -443,4 +453,4 @@ option:hover {
 .qrcode-image {
     max-width: 180px;
     border-radius: 4px;
-} 
+}
