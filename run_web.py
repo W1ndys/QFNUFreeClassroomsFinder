@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 import colorlog
 from src.web.app import app
