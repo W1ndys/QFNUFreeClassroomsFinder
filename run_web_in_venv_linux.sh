@@ -10,6 +10,16 @@ echo ""
 # PID文件路径
 PID_FILE=".web_app.pid"
 
+# 清理旧日志文件，只保留最近的10个
+clean_old_logs() {
+    if [ -d "logs" ]; then
+        cd logs
+        # 保留最新的10个日志文件
+        ls -t web_app_*.log | tail -n +11 | xargs -I {} rm -f {}
+        cd ..
+    fi
+}
+
 # 检查是否有旧进程在运行
 if [ -f "$PID_FILE" ]; then
     OLD_PID=$(cat "$PID_FILE")
@@ -20,6 +30,10 @@ if [ -f "$PID_FILE" ]; then
     fi
     rm -f "$PID_FILE"
 fi
+
+# 清理旧日志
+echo "正在清理旧日志文件..."
+clean_old_logs
 
 # 检查venv目录是否存在
 if [ ! -d "venv" ]; then

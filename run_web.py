@@ -2,6 +2,7 @@ import os
 import logging
 import colorlog
 from src.web.app import app
+from datetime import datetime
 
 
 def setup_logger():
@@ -35,8 +36,21 @@ def setup_logger():
     )
     console_handler.setFormatter(console_formatter)
 
+    # 配置文件处理器
+    log_filename = f"logs/web_app_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+    file_handler = logging.FileHandler(log_filename, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    file_handler.setFormatter(file_formatter)
+
     # 添加处理器到logger
     logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    # 记录日志文件位置
+    logger.info(f"日志文件保存在: {os.path.abspath(log_filename)}")
 
     return logger
 
@@ -64,5 +78,11 @@ if __name__ == "__main__":
     # 打印欢迎信息
     print_welcome()
 
-    # 启动Flask应用
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    try:
+        # 启动Flask应用
+        app.run(debug=True, host="0.0.0.0", port=5000)
+    except KeyboardInterrupt:
+        logger.info("服务已停止")
+    except Exception as e:
+        logger.error(f"服务发生错误: {str(e)}")
+        raise
