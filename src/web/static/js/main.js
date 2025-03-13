@@ -976,6 +976,12 @@ function createDayTable(room, day, jc1, jc2) {
     }
 
     let html = `<table class="timetable">
+        <thead>
+            <tr>
+                <th width="120">节次</th>
+                <th>课程信息</th>
+            </tr>
+        </thead>
         <tbody>`;
 
     // 获取所有节次，并按照数字顺序排序
@@ -1005,50 +1011,32 @@ function createDayTable(room, day, jc1, jc2) {
         }
     });
 
-    // 然后添加未被覆盖的单节次
+    // 然后添加"第X节"格式的节次
     allPeriods.forEach(period => {
-        const match = period.match(/第(\d+)节/);
-        if (match) {
-            const periodNum = parseInt(match[1]);
-            // 检查这个单节次是否已经被某个区间覆盖
-            let covered = false;
-            for (const displayedPeriod of displayedPeriods) {
-                if (!isNaN(displayedPeriod) && displayedPeriod.length === 4) {
-                    const start = parseInt(displayedPeriod.substring(0, 2));
-                    const end = parseInt(displayedPeriod.substring(2, 4));
-                    if (periodNum >= start && periodNum <= end) {
-                        covered = true;
-                        break;
-                    }
+        if (period.match(/第\d+节/)) {
+            const num = period.match(/第(\d+)节/)[1];
+            // 检查是否已经有对应的数字格式节次
+            const hasNumericPeriod = displayedPeriods.some(p => {
+                if (p.length === 4) {
+                    const start = parseInt(p.substring(0, 2));
+                    const end = parseInt(p.substring(2, 4));
+                    return parseInt(num) >= start && parseInt(num) <= end;
                 }
-            }
-            if (!covered) {
+                return false;
+            });
+            if (!hasNumericPeriod) {
                 displayedPeriods.push(period);
             }
         }
     });
 
-    // 遍历排序后的节次
+    // 按顺序显示课程信息
     for (const period of displayedPeriods) {
         const classes = daySchedule[period];
+        const periodNum = !isNaN(period) ? parseInt(period.substring(0, 2)) : parseInt(period.match(/第(\d+)节/)[1]);
         
-        // 检查是否在用户选择的节次范围内
-        let isInSelectedRange = false;
-        if (jc1 && jc2) {
-            if (!isNaN(period) && period.length === 4) {
-                // 对于区间节次（如"0102"），检查是否与用户选择的范围有重叠
-                const start = parseInt(period.substring(0, 2));
-                const end = parseInt(period.substring(2, 4));
-                isInSelectedRange = !(end < parseInt(jc1) || start > parseInt(jc2));
-            } else {
-                // 对于单节次（如"第1节"），检查是否在用户选择的范围内
-                const match = period.match(/第(\d+)节/);
-                if (match) {
-                    const periodNum = parseInt(match[1]);
-                    isInSelectedRange = periodNum >= parseInt(jc1) && periodNum <= parseInt(jc2);
-                }
-            }
-        }
+        // 检查是否在选定的节次范围内
+        const isInSelectedRange = (!jc1 || periodNum >= parseInt(jc1)) && (!jc2 || periodNum <= parseInt(jc2));
         
         if (classes && classes.length > 0) {
             // 过滤掉已经显示过的课程
@@ -1077,7 +1065,10 @@ function createDayTable(room, day, jc1, jc2) {
             const highlightClass = isInSelectedRange ? ' highlighted-period' : '';
             
             html += `<tr class="has-class${highlightClass}">
-                <td>`;
+                <td class="period-cell">
+                    <div class="period-info">${displayPeriod}</div>
+                </td>
+                <td class="course-cell">`;
             
             // 如果有原始文本，直接显示
             if (classInfo.original_text) {
@@ -1120,7 +1111,12 @@ function createDayTable(room, day, jc1, jc2) {
             const highlightClass = isInSelectedRange ? ' highlighted-period' : '';
             
             html += `<tr class="no-class${highlightClass}">
-                <td>空闲</td>
+                <td class="period-cell">
+                    <div class="period-info">${displayPeriod}</div>
+                </td>
+                <td class="course-cell">
+                    <div>空闲</div>
+                </td>
             </tr>`;
         }
     }

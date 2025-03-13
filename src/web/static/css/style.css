@@ -64,39 +64,66 @@ body {
     margin-bottom: 15px;
 }
 
-/* 课表结果样式 */
+/* 课表表格样式 */
 .timetable {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
-}
-
-.timetable th,
-.timetable td {
-    border: 1px solid #dee2e6;
-    padding: 8px;
-    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .timetable th {
     background-color: #f8f9fa;
     font-weight: bold;
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #dee2e6;
 }
 
-.timetable .has-class {
+.timetable td {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+.timetable .period-cell {
+    background-color: #f8f9fa;
+    text-align: center;
+    width: 120px;
+    vertical-align: middle;
+}
+
+.timetable .course-cell {
+    text-align: left;
+}
+
+.timetable .has-class .course-cell {
     background-color: #ffebee;
 }
 
-.timetable .has-class.continued {
-    background-color: #ffcdd2;
-    border-top: 1px dashed #e57373;
-}
-
-.timetable .no-class {
+.timetable .no-class .course-cell {
     background-color: #e8f5e9;
+    color: #2e7d32;
 }
 
+.timetable .period-info {
+    font-weight: bold;
+    color: #1a73e8;
+    padding: 4px 8px;
+    background-color: rgba(26, 115, 232, 0.1);
+    border-radius: 4px;
+    display: inline-block;
+}
 
+.timetable .no-class .period-info {
+    color: #5f6368;
+    background-color: rgba(95, 99, 104, 0.1);
+}
+
+.timetable tr.highlighted-period td {
+    border-left: 3px solid #1a73e8;
+}
 
 .room-title {
     margin-top: 20px;
