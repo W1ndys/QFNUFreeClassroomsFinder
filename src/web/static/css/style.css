@@ -210,9 +210,14 @@ body {
 
 #announcement-card .card-header {
     background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-    color: rgb(59, 42, 211);
+    color: white;
     border: none;
+    transition: background 0.3s ease;
     padding: 12px 20px;
+}
+
+#announcement-card .card-header:hover {
+    background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
 }
 
 #announcement-card .card-body {
@@ -276,7 +281,7 @@ body {
 }
 
 #bottom-ad-card .card-header {
-    background-color: #e60012;
+    background-color: #d44a55;
     color: #ffffff;
     border-bottom: none;
     padding: 12px 20px;
@@ -557,4 +562,22 @@ option:hover {
 .qrcode-image {
     max-width: 180px;
     border-radius: 4px;
+}
+
+.join-link {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: rgba(25, 118, 210, 0.1);
+    border-radius: 4px;
+}
+
+.join-link:hover {
+    color: #0d47a1;
+    background-color: rgba(25, 118, 210, 0.2);
+    transform: translateY(-2px);
+    text-decoration: none;
 }

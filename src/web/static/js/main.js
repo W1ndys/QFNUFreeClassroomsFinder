@@ -267,6 +267,20 @@ function getDayName(day) {
 
 // 初始化广告/宣传区域
 function initAnnouncements() {
+    // 处理公告折叠状态
+    const announcementContent = document.getElementById('announcement-content');
+    const announcementToggle = document.querySelector('.announcement-toggle');
+
+    if (announcementContent && announcementToggle) {
+        announcementContent.addEventListener('show.bs.collapse', function () {
+            announcementToggle.style.transform = 'rotate(0deg)';
+        });
+
+        announcementContent.addEventListener('hide.bs.collapse', function () {
+            announcementToggle.style.transform = 'rotate(180deg)';
+        });
+    }
+
     // 加载公告内容
     loadAnnouncementContent();
 }
@@ -301,8 +315,14 @@ function loadAnnouncementContent() {
 
 // 渲染公告
 function renderAnnouncement(announcement) {
-    const announcementContent = document.getElementById('announcement-content');
+    const announcementContent = document.querySelector('#announcement-content .card-body');
     if (!announcementContent) return;
+
+    // 更新标题
+    const headerTitle = document.querySelector('#announcement-card .card-header h5');
+    if (headerTitle) {
+        headerTitle.innerHTML = `<i class="fas fa-bullhorn me-2"></i>${announcement.title || '公告'}`;
+    }
 
     // 构建公告内容
     const content = announcement.content;

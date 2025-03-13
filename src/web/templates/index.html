@@ -26,18 +26,23 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card" id="announcement-card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" 
+                         role="button" data-bs-toggle="collapse" data-bs-target="#announcement-content" 
+                         aria-expanded="true" aria-controls="announcement-content" style="cursor: pointer;">
                         <h5 class="mb-0">
                             <i class="fas fa-bullhorn me-2"></i>公告
                         </h5>
+                        <i class="fas fa-chevron-up announcement-toggle"></i>
                     </div>
-                    <div class="card-body" id="announcement-content">
-                        <!-- 公告内容将通过JavaScript动态加载 -->
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
+                    <div class="collapse show" id="announcement-content">
+                        <div class="card-body">
+                            <!-- 公告内容将通过JavaScript动态加载 -->
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">正在加载公告内容...</p>
                             </div>
-                            <p class="mt-2">正在加载公告内容...</p>
                         </div>
                     </div>
                 </div>

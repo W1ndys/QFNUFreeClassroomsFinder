@@ -3,7 +3,7 @@
         "title": "公告",
         "content": {
             "type": "html",
-            "html": "<div class='announcement-text'><div class='welcome-message mb-3'><i class='fas fa-star me-2'></i>欢迎加入曲阜师范大学课表查询交流群！</div><p>在这里您可以与其他同学交流使用心得，获取最新功能更新，以及提出宝贵建议。</p><div class='contact-info mt-3'><p class='mb-2'><i class='fab fa-qq me-2'></i>QQ群号：497554955</p></div></div>"
+            "html": "<div class='announcement-text'><div class='welcome-message mb-3'><i class='fas fa-star me-2'></i>欢迎加入曲阜师范大学选课指北群！</div><p>在这里您可以与其他同学交流学习生活，获取最新功能更新，获取更多工具脚本的使用，以及提出宝贵建议。</p><div class='contact-info mt-3'><p class='mb-2'><i class='fas fa-bell me-2'></i><a href='https://qm.qq.com/q/mfzEyQkP3q' class='join-link'>点击加入 Easy-QFNU｜曲师大选课指北群</a></p><p class='mb-2'><i class='fas fa-bell me-2'></i><a href='https://qm.qq.com/q/vzE1vd3tmw' class='join-link'>点击加入 Easy-QFNU｜曲师大选课指北群2</a></p></div></div>"
         }
     },
     "bottom": {
@@ -12,25 +12,25 @@
             "type": "categories",
             "categories": [
                 {
-                    "name": "校园服务",
+                    "name": "关于作者",
                     "links": [
                         {
-                            "name": "曲阜师范大学官网",
-                            "url": "https://www.qfnu.edu.cn/",
-                            "icon": "fas fa-university",
-                            "description": "曲阜师范大学官方网站"
+                            "name": "作者主页",
+                            "url": "https://w1ndys.top/",
+                            "icon": "fas fa-user",
+                            "description": "作者主页"
                         },
                         {
-                            "name": "教务管理系统",
-                            "url": "http://zhjw.qfnu.edu.cn/",
-                            "icon": "fas fa-book",
-                            "description": "曲阜师范大学教务管理系统"
+                            "name": "作者博客",
+                            "url": "https://blog.w1ndys.top/",
+                            "icon": "fas fa-blog",
+                            "description": "作者博客"
                         },
                         {
-                            "name": "图书馆",
-                            "url": "http://lib.qfnu.edu.cn/",
-                            "icon": "fas fa-book-reader",
-                            "description": "曲阜师范大学图书馆"
+                            "name": "作者Github",
+                            "url": "https://github.com/w1ndys",
+                            "icon": "fas fa-github",
+                            "description": "作者Github"
                         }
                     ]
                 },
@@ -38,22 +38,22 @@
                     "name": "实用工具",
                     "links": [
                         {
-                            "name": "校园导航",
-                            "url": "#",
-                            "icon": "fas fa-map-marker-alt",
-                            "description": "校园地图导航"
+                            "name": "Easy-QFNU官网",
+                            "url": "https://easy-qfnu.top/",
+                            "icon": "fas fa-globe",
+                            "description": "Easy-QFNU官网"
                         },
                         {
-                            "name": "考试时间查询",
-                            "url": "#",
+                            "name": "选课指北",
+                            "url": "https://easy-qfnu.top/EasySelectCourse/",
                             "icon": "fas fa-calendar-check",
-                            "description": "查询考试安排"
+                            "description": "选课指北"
                         },
                         {
-                            "name": "图书馆座位预约",
-                            "url": "#",
-                            "icon": "fas fa-chair",
-                            "description": "预约图书馆座位"
+                            "name": "W1ndysBot",
+                            "url": "https://github.com/w1ndys/W1ndysBot",
+                            "icon": "fas fa-robot",
+                            "description": "W1ndysBot，基于NapCatQQ和Python的QQ机器人"
                         }
                     ]
                 }
@@ -109,4 +109,4 @@
             ]
         }
     }
-} 
+}
