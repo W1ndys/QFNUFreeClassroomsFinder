@@ -31,6 +31,10 @@ if errorlevel 1 (
 echo Virtual environment activated.
 echo.
 
+REM 自动打开浏览器访问网页
+echo 正在打开浏览器...
+start http://127.0.0.1:5000
+
 REM 运行网页应用
 echo Starting web service...
 python run_web.py
