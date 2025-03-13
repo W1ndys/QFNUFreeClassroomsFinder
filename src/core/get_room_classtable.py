@@ -4,7 +4,7 @@ from src.utils.session_manager import get_session
 import logging
 
 
-def get_room_classtable(xnxqh, room_name, week, day=None):
+def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
     """
     获取指定教室的课表信息
 
@@ -13,6 +13,8 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
         room_name (str): 教室名称前缀，如 "格物楼B"将匹配所有以"格物楼B"开头的教室
         week (int): 周次，如 3
         day (int, optional): 星期几，1-7，如果不指定则返回整周课表
+        jc1 (str, optional): 开始节次，默认为空
+        jc2 (str, optional): 结束节次，默认为空
 
     返回:
         dict: 课表信息，包含匹配前缀的所有教室数据
@@ -65,8 +67,8 @@ def get_room_classtable(xnxqh, room_name, week, day=None):
             "zc2": str(week),
             "skxq1": str(day) if day else "",
             "skxq2": str(day) if day else "",
-            "jc1": "",
-            "jc2": "",
+            "jc1": jc1,
+            "jc2": jc2,
         }
 
         # 发送POST请求
