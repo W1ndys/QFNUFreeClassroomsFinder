@@ -248,18 +248,19 @@ def parse_classtable_new(table, specific_day=None, room_name=None, jc1=None, jc2
                                         )
 
                                 has_classes = True
-                                logging.info(
-                                    f"教室 {current_room_name} 在星期{day_index}的{period}有课: {course_text[:20]}..."
-                                )
+                                # logging.info(
+                                #     f"教室 {current_room_name} 在星期{day_index}的{period}有课: {course_text[:20]}..."
+                                # )
 
             # 只有当教室有课时，才添加到结果中
             if has_classes:
                 rooms_data.append(
                     {"name": current_room_name, "schedule": room_schedule}
                 )
-                logging.info(f"教室 {current_room_name} 有课，添加到结果")
+                # logging.info(f"教室 {current_room_name} 有课，添加到结果")
             else:
-                logging.info(f"教室 {current_room_name} 没有课，不添加到结果")
+                # logging.info(f"教室 {current_room_name} 没有课，不添加到结果")
+                pass
 
     except Exception as e:
         logging.error(f"解析课表时出错: {str(e)}")
