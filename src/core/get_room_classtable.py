@@ -66,7 +66,7 @@ def get_room_classtable(xnxqh, room_name, week, day=None, jc1=None, jc2=None):
         }
 
         # 记录请求参数，便于调试
-        logging.info(f"课表查询请求参数: {data}")
+        # logging.info(f"课表查询请求参数: {data}")
 
         # 发送POST请求
         response = session.post(url, data=data)
@@ -157,7 +157,7 @@ def parse_classtable_new(table, specific_day=None, room_name=None, jc1=None, jc2
         for td in period_cells[1:]:  # 跳过第一个单元格
             periods.append(td.text.strip())
 
-        logging.info(f"解析到的节次: {periods}")
+        # logging.info(f"解析到的节次: {periods}")
 
         # 计算每天有多少个节次列
         periods_per_day = len(periods) // 7  # 假设一周7天
