@@ -207,6 +207,8 @@ def query_classtable():
         room_name = data.get("room_name") if data else None  # 教室名称
         week = data.get("week") if data else None  # 周次
         day = data.get("day") if data else None  # 星期几
+        jc1 = data.get("jc1") if data else None  # 开始节次，默认为空
+        jc2 = data.get("jc2") if data else None  # 结束节次，默认为空
 
         if not all([xnxqh, room_name, week]):
             return (
@@ -228,7 +230,7 @@ def query_classtable():
             )
 
         # 查询课表
-        result = get_room_classtable(xnxqh, room_name, week, day)
+        result = get_room_classtable(xnxqh, room_name, week, day, jc1, jc2)
 
         return jsonify(result)
 
@@ -404,15 +406,16 @@ def get_free_classrooms():
         xnxqh = data.get("xnxqh")  # 学年学期
         week = data.get("week")  # 周次
         day = data.get("day")  # 星期几
-        periods = data.get("periods", [])  # 时间段列表
+        jc1 = data.get("jc1", "01")  # 开始节次
+        jc2 = data.get("jc2", "13")  # 结束节次
         building_prefix = data.get("building_prefix", "")  # 建筑物前缀
 
-        if not all([xnxqh, week, day]) or not periods:
+        if not all([xnxqh, week, day, jc1, jc2]):
             return (
                 jsonify(
                     {
                         "status": "error",
-                        "message": "学年学期、周次、星期几和时间段不能为空",
+                        "message": "学年学期、周次、星期几和节次范围不能为空",
                     }
                 ),
                 400,
@@ -456,10 +459,34 @@ def get_free_classrooms():
             buildings = classrooms_data
 
         # 一次性查询所有教室，使用前缀匹配
-        result = get_room_classtable(xnxqh, building_prefix, week, day)
+        result = get_room_classtable(xnxqh, building_prefix, week, day, jc1, jc2)
 
         # 存储有课教室信息
         occupied_rooms = set()
+
+        # 生成节次列表，用于前端显示
+        period_mapping = {
+            "01": "第一节",
+            "02": "第二节",
+            "03": "第三节",
+            "04": "第四节",
+            "05": "第五节",
+            "06": "第六节",
+            "07": "第七节",
+            "08": "第八节",
+            "09": "第九节",
+            "10": "第十节",
+            "11": "第十一节",
+            "12": "第十二节",
+            "13": "第十三节",
+        }
+
+        # 根据开始和结束节次生成时间段列表
+        periods = []
+        for i in range(int(jc1), int(jc2) + 1):
+            period_code = f"{i:02d}"
+            if period_code in period_mapping:
+                periods.append(period_mapping[period_code])
 
         if result["status"] == "success" and result["data"]:
             # 处理查询结果，找出有课的教室
@@ -471,7 +498,8 @@ def get_free_classrooms():
                 if str(day) in room_data["schedule"]:
                     day_schedule = room_data["schedule"][str(day)]
                     for period in periods:
-                        if period in day_schedule and day_schedule[period]:
+                        period_name = period.split(" ")[0]  # 提取节次名称，去掉时间部分
+                        if period_name in day_schedule and day_schedule[period_name]:
                             is_occupied = True
                             break
 
