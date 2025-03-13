@@ -264,6 +264,7 @@ if __name__ == "__main__":
 
     # 打印欢迎信息
     print_welcome()
+
     main()
 
     # 获取课表

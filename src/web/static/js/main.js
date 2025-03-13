@@ -686,7 +686,12 @@ function handleLogout() {
                 document.getElementById('user-info-section').classList.add('d-none');
                 document.getElementById('query-btn').disabled = true;
                 document.getElementById('result-section').classList.add('d-none');
-                document.getElementById('free-classroom-section').classList.add('d-none');
+                
+                // 隐藏空闲教室结果
+                const freeClassroomResults = document.getElementById('free-classroom-results');
+                if (freeClassroomResults) {
+                    freeClassroomResults.style.display = 'none';
+                }
 
                 // 刷新验证码
                 refreshCaptcha();
@@ -735,7 +740,10 @@ async function handleQuery() {
     resultSection.classList.remove('d-none');
 
     // 隐藏空闲教室结果区域
-    document.getElementById('free-classroom-section').classList.add('d-none');
+    const freeClassroomResults = document.getElementById('free-classroom-results');
+    if (freeClassroomResults) {
+        freeClassroomResults.style.display = 'none';
+    }
 
     // 清空结果容器并显示加载提示
     const resultContainer = document.getElementById('result-container');
