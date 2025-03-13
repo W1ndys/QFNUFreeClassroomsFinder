@@ -2,6 +2,10 @@
 <html lang="zh-CN">
 
 <head>
+    <script charset="UTF-8" id="LA_COLLECT" src="//sdk.51.la/js-sdk-pro.min.js"></script>
+    <script>
+        LA.init({ id: "3LXM1Spq74C2Vg9h", ck: "3LXM1Spq74C2Vg9h", autoTrack: true, hashMode: true, screenRecord: true })
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>曲阜师范大学教室课表查询系统</title>
@@ -26,9 +30,9 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card" id="announcement-card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center" 
-                         role="button" data-bs-toggle="collapse" data-bs-target="#announcement-content" 
-                         aria-expanded="true" aria-controls="announcement-content" style="cursor: pointer;">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+                        role="button" data-bs-toggle="collapse" data-bs-target="#announcement-content"
+                        aria-expanded="true" aria-controls="announcement-content" style="cursor: pointer;">
                         <h5 class="mb-0">
                             <i class="fas fa-bullhorn me-2"></i>公告
                         </h5>
@@ -149,7 +153,8 @@
                                 <label class="form-label"><i class="fas fa-clock me-2"></i>节次范围</label>
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label for="start-period" class="form-label"><i class="fas fa-hourglass-start me-2"></i>开始节次</label>
+                                        <label for="start-period" class="form-label"><i
+                                                class="fas fa-hourglass-start me-2"></i>开始节次</label>
                                         <select class="form-select" id="start-period" required>
                                             <option value="01">第一节</option>
                                             <option value="02">第二节</option>
@@ -167,7 +172,8 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="end-period" class="form-label"><i class="fas fa-hourglass-end me-2"></i>结束节次</label>
+                                        <label for="end-period" class="form-label"><i
+                                                class="fas fa-hourglass-end me-2"></i>结束节次</label>
                                         <select class="form-select" id="end-period" required>
                                             <option value="01">第一节</option>
                                             <option value="02">第二节</option>
@@ -266,7 +272,8 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="jc1" class="form-label"><i class="fas fa-hourglass-start me-2"></i>开始节次</label>
+                                    <label for="jc1" class="form-label"><i
+                                            class="fas fa-hourglass-start me-2"></i>开始节次</label>
                                     <select class="form-select" id="jc1">
                                         <option value="01" selected>第一节</option>
                                         <option value="02">第二节</option>
@@ -284,7 +291,8 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="jc2" class="form-label"><i class="fas fa-hourglass-end me-2"></i>结束节次</label>
+                                    <label for="jc2" class="form-label"><i
+                                            class="fas fa-hourglass-end me-2"></i>结束节次</label>
                                     <select class="form-select" id="jc2">
                                         <option value="01">第一节</option>
                                         <option value="02">第二节</option>
@@ -358,6 +366,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
 </body>
 
 </html>
