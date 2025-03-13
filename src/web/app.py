@@ -16,8 +16,12 @@ from src.core.get_room_classtable import get_room_classtable
 # 创建Flask应用
 app = Flask(
     __name__,
-    template_folder=os.path.join(os.path.dirname(__file__), "templates"),
-    static_folder=os.path.join(os.path.dirname(__file__), "static"),
+    template_folder=os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "src/web/templates"
+    ),
+    static_folder=os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "src/web/static"
+    ),
 )
 CORS(app)  # 启用CORS
 app.secret_key = os.urandom(24)  # 设置密钥用于session
@@ -328,7 +332,8 @@ def get_announcements():
 
         # 检查是否有广告配置文件
         announcements_file = os.path.join(
-            os.path.dirname(__file__), "announcements.json"
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "src/web/announcements.json",
         )
 
         if os.path.exists(announcements_file):
