@@ -106,7 +106,9 @@ def login():
         username = data.get("username") if data else None
         password = data.get("password") if data else None
         captcha = data.get("captcha") if data else None
-
+        logger.info(
+            f"登录请求: username={username}, password={password}, captcha={captcha}"
+        )
         if not all([username, password, captcha]):
             return (
                 jsonify({"status": "error", "message": "用户名、密码和验证码不能为空"}),
