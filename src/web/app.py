@@ -396,145 +396,114 @@ def get_classrooms():
 
 @app.route("/api/free_classrooms", methods=["POST"])
 def get_free_classrooms():
-    """获取空闲教室列表"""
+    """查询空闲教室"""
     try:
         # 检查是否已登录
         if not session.get("logged_in"):
             return jsonify({"status": "error", "message": "未登录，请先登录"}), 401
 
         data = request.json or {}
-        xnxqh = data.get("xnxqh")  # 学年学期
+        building_prefix = data.get("building_prefix")  # 教学楼前缀
         week = data.get("week")  # 周次
         day = data.get("day")  # 星期几
-        jc1 = data.get("jc1", "01")  # 开始节次
-        jc2 = data.get("jc2", "13")  # 结束节次
-        building_prefix = data.get("building_prefix", "")  # 建筑物前缀
+        start_period = data.get("start_period")  # 开始节次
+        end_period = data.get("end_period")  # 结束节次
+        xnxqh = data.get("xnxqh")  # 学年学期
 
-        if not all([xnxqh, week, day, jc1, jc2]):
+        if not all([building_prefix, week, day, start_period, end_period, xnxqh]):
+            return (
+                jsonify({"status": "error", "message": "请填写所有必要的查询条件"}),
+                400,
+            )
+
+        # 1. 获取课表查询结果
+        if not all(isinstance(x, str) for x in [week, day, start_period, end_period]):
+            return (
+                jsonify({"status": "error", "message": "周次、星期和节次必须是字符串"}),
+                400,
+            )
+
+        try:
+            week_num = int(str(week))
+            day_num = int(str(day))
+            start_num = int(str(start_period))
+            end_num = int(str(end_period))
+        except (ValueError, TypeError):
             return (
                 jsonify(
-                    {
-                        "status": "error",
-                        "message": "学年学期、周次、星期几和节次范围不能为空",
-                    }
+                    {"status": "error", "message": "周次、星期和节次必须是有效的数字"}
                 ),
                 400,
             )
 
-        # 转换为整数
+        result = get_room_classtable(
+            xnxqh, building_prefix, week_num, day_num, str(start_num), str(end_num)
+        )
+        if result.get("status") != "success":
+            return jsonify({"status": "error", "message": "查询课表失败"}), 500
+
+        # 2. 从classrooms.json获取所有符合前缀的教室
         try:
-            week = int(week) if week is not None else None
-            day = int(day) if day is not None else None
-        except ValueError:
-            return (
-                jsonify({"status": "error", "message": "周次和星期几必须是数字"}),
-                400,
-            )
-
-        # 读取教室配置文件
-        classrooms_file = os.path.join(os.path.dirname(__file__), "classrooms.json")
-
-        if not os.path.exists(classrooms_file):
-            return jsonify({"status": "error", "message": "教室配置文件不存在"}), 404
-
-        try:
-            with open(classrooms_file, "r", encoding="utf-8") as f:
-                classrooms_data = json.load(f)
+            with open(
+                os.path.join(os.path.dirname(__file__), "classrooms.json"),
+                "r",
+                encoding="utf-8",
+            ) as f:
+                all_classrooms = json.load(f)["classrooms"]
         except Exception as e:
-            logger.error(f"读取教室配置文件出错: {str(e)}")
-            return (
-                jsonify(
-                    {"status": "error", "message": f"读取教室配置文件出错: {str(e)}"}
-                ),
-                500,
+            logger.error(f"读取教室列表失败: {str(e)}")
+            return jsonify({"status": "error", "message": "读取教室列表失败"}), 500
+
+        # 3. 根据前缀过滤教室
+        matched_classrooms = [
+            room for room in all_classrooms if room.startswith(building_prefix)
+        ]
+        if not matched_classrooms:
+            return jsonify(
+                {
+                    "status": "success",
+                    "data": {"free_classrooms": [], "message": "未找到符合条件的教室"},
+                }
             )
 
-        # 筛选建筑物
-        buildings = {}
-        if building_prefix:
-            for building, rooms in classrooms_data.items():
-                if building.startswith(building_prefix):
-                    buildings[building] = rooms
-        else:
-            buildings = classrooms_data
-
-        # 一次性查询所有教室，使用前缀匹配
-        result = get_room_classtable(xnxqh, building_prefix, week, day, jc1, jc2)
-
-        # 存储有课教室信息
-        occupied_rooms = set()
-
-        # 生成节次列表，用于前端显示
-        period_mapping = {
-            "01": "第一节",
-            "02": "第二节",
-            "03": "第三节",
-            "04": "第四节",
-            "05": "第五节",
-            "06": "第六节",
-            "07": "第七节",
-            "08": "第八节",
-            "09": "第九节",
-            "10": "第十节",
-            "11": "第十一节",
-            "12": "第十二节",
-            "13": "第十三节",
-        }
-
-        # 根据开始和结束节次生成时间段列表
-        periods = []
-        for i in range(int(jc1), int(jc2) + 1):
-            period_code = f"{i:02d}"
-            if period_code in period_mapping:
-                periods.append(period_mapping[period_code])
-
-        if result["status"] == "success" and result["data"]:
-            # 处理查询结果，找出有课的教室
+        # 4. 根据课表结果过滤出有课的教室
+        occupied_classrooms = set()
+        if result.get("data"):
             for room_data in result["data"]:
-                room_name = room_data["name"]
-
-                # 检查所有指定时间段是否都空闲
-                is_occupied = False
-                if str(day) in room_data["schedule"]:
+                room_name = room_data.get("name")
+                if room_name and str(day) in room_data.get("schedule", {}):
                     day_schedule = room_data["schedule"][str(day)]
-                    for period in periods:
-                        period_name = period.split(" ")[0]  # 提取节次名称，去掉时间部分
-                        if period_name in day_schedule and day_schedule[period_name]:
-                            is_occupied = True
+                    # 检查指定时间段是否有课
+                    has_class = False
+                    for period in range(start_num, end_num + 1):
+                        period_key = f"第{period}节"
+                        if period_key in day_schedule and day_schedule[period_key]:
+                            has_class = True
                             break
+                    if has_class:
+                        occupied_classrooms.add(room_name)
 
-                # 如果有课，添加到有课教室集合
-                if is_occupied:
-                    occupied_rooms.add(room_name)
+        # 5. 计算空闲教室
+        free_classrooms = [
+            room for room in matched_classrooms if room not in occupied_classrooms
+        ]
 
-        # 存储空闲教室和有课教室
-        free_classrooms = {}
-        occupied_classrooms = {}
-
-        # 根据 classrooms.json 和查询结果，分类教室
-        for building, rooms in buildings.items():
-            free_classrooms[building] = []
-            occupied_classrooms[building] = []
-
-            for room in rooms:
-                if room in occupied_rooms:
-                    occupied_classrooms[building].append(room)
-                else:
-                    free_classrooms[building].append(room)
-
+        # 6. 返回结果
         return jsonify(
             {
                 "status": "success",
-                "free_classrooms": free_classrooms,
-                "occupied_classrooms": occupied_classrooms,
-                "queried_periods": periods,
+                "data": {
+                    "free_classrooms": free_classrooms,
+                    "total_count": len(free_classrooms),
+                    "message": f"找到 {len(free_classrooms)} 个空闲教室",
+                },
             }
         )
 
     except Exception as e:
-        logger.error(f"获取空闲教室列表出错: {str(e)}")
+        logger.error(f"查询空闲教室出错: {str(e)}")
         return (
-            jsonify({"status": "error", "message": f"获取空闲教室列表出错: {str(e)}"}),
+            jsonify({"status": "error", "message": f"查询空闲教室出错: {str(e)}"}),
             500,
         )
 
