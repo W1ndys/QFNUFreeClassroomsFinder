@@ -56,25 +56,20 @@ echo ""
 
 # 运行网页应用
 echo "正在启动网页服务..."
-python3 run_web.py &
+nohup python3 run_web.py > /dev/null 2>&1 &
 APP_PID=$!
 
 # 保存PID到文件
 echo $APP_PID > "$PID_FILE"
 echo "程序已启动，PID: $APP_PID"
-
-# 等待程序运行
-wait $APP_PID
-
-# 如果程序异常退出
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "程序异常退出，错误代码: $?"
-    read -p "按回车键继续..."
-fi
-
-# 清理PID文件
-rm -f "$PID_FILE"
+echo "日志文件将保存在 logs 目录中"
+echo "使用以下命令可以查看日志："
+echo "tail -f logs/web_app_*.log"
+echo ""
+echo "要停止服务，请运行："
+echo "kill \$(cat $PID_FILE)"
 
 # 退出虚拟环境
-deactivate 
+deactivate
+
+exit 0 
